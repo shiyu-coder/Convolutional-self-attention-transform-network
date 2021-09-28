@@ -18,11 +18,18 @@ class SingleEncoder(nn.Module):
         self.li = []
 
         seq_size = num_hiddens
-        for i in range(layer_num):
-            self.mha.append(MultiHeadAttention(seq_size, seq_size, seq_size, seq_size, num_heads, drop_out))
-            self.an.append(AddNorm((seq_len, seq_size), drop_out))
-            self.li.append(nn.Linear(seq_size, max(min_output_size, seq_size//2)))
-            seq_size = max(min_output_size, seq_size//2)
+        if torch.cuda.is_available():
+            for i in range(layer_num):
+                self.mha.append(MultiHeadAttention(seq_size, seq_size, seq_size, seq_size, num_heads, drop_out).cuda())
+                self.an.append(AddNorm((seq_len, seq_size), drop_out).cuda())
+                self.li.append(nn.Linear(seq_size, max(min_output_size, seq_size//2)).cuda())
+                seq_size = max(min_output_size, seq_size//2)
+        else:
+            for i in range(layer_num):
+                self.mha.append(MultiHeadAttention(seq_size, seq_size, seq_size, seq_size, num_heads, drop_out))
+                self.an.append(AddNorm((seq_len, seq_size), drop_out))
+                self.li.append(nn.Linear(seq_size, max(min_output_size, seq_size//2)))
+                seq_size = max(min_output_size, seq_size//2)
 
         self.actFun = nn.ELU()
         self.key_size = seq_size

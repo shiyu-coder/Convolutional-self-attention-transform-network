@@ -178,9 +178,6 @@ class Exp_model:
         self.model.eval()
         total_loss = []
         for i, (batch_x, batch_y) in enumerate(vali_loader):
-            global vali_test_count
-            vali_test_count += 1
-
             if self.use_gpu:
                 batch_x, batch_y = batch_x.cuda(), batch_y.cuda()
 

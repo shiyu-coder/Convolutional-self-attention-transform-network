@@ -1,3 +1,4 @@
+import torch.cuda
 import torch.nn as nn
 from models.attention import MaskedMultiHeadAttention
 from utils.addNorm import AddNorm
@@ -30,8 +31,12 @@ class Decoder(nn.Module):
         super(Decoder, self).__init__()
         self.layer_num = layer_num
         self.dec = []
-        for i in range(layer_num):
-            self.dec.append(DecoderLayer(key_size, num_hiddens, num_heads, seq_len, drop_out))
+        if torch.cuda.is_available():
+            for i in range(layer_num):
+                self.dec.append(DecoderLayer(key_size, num_hiddens, num_heads, seq_len, drop_out).cuda())
+        else:
+            for i in range(layer_num):
+                self.dec.append(DecoderLayer(key_size, num_hiddens, num_heads, seq_len, drop_out))
 
     def forward(self, x, cross):
         for i in range(self.layer_num):

@@ -25,7 +25,7 @@ parser.add_argument('--attention', type=bool, default=False, help='use Parallel 
 
 parser.add_argument('--itr', type=int, default=1, help='experiments times')
 parser.add_argument('--epoch', type=int, default=6, help='train epochs')
-parser.add_argument('--batch_size', type=int, default=16, help='batch size of train input data')
+parser.add_argument('--batch_size', type=int, default=4, help='batch size of train input data')
 parser.add_argument('--patience', type=int, default=3, help='early stopping patience')
 parser.add_argument('--learning_rate', type=float, default=0.0001, help='optimizer learning rate')
 parser.add_argument('--loss', type=str, default='mse', help='loss function')
