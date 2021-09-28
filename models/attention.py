@@ -28,31 +28,6 @@ def transpose_output(X, num_heads):
     return X.reshape(X.shape[0], X.shape[1], -1)
 
 
-class ParallelInception(nn.Module):
-
-    def __init__(self, in_channels, c1, c2, c3):
-        super(ParallelInception, self).__init__()
-        # 单1x1卷积层
-        self.p1_1 = nn.Conv2d(in_channels, c1, kernel_size=1)
-        # 线路2，1 x 1卷积层后接3 x 3卷积层
-        self.p2_1 = nn.Conv2d(in_channels, c2[0], kernel_size=1)
-        self.p2_2 = nn.Conv2d(c2[0], c2[1], kernel_size=3, padding=1)
-        # 1x1卷积层 + 5x5卷积层
-        self.p3_1 = nn.Conv2d(in_channels, c3[0], kernel_size=1)
-        self.p3_2 = nn.Conv2d(c3[0], c3[1], kernel_size=5, padding=2)
-
-        self.actFun = nn.ELU()
-
-    def forward(self, x):
-        p1 = self.actFun(self.p1_1(x))
-        p2 = self.actFun(self.p2_2(self.actFun(self.p2_1(x))))
-        p3 = self.actFun(self.p3_2(self.actFun(self.p3_1(x))))
-
-        # 在通道维度上连接输出
-        output = torch.cat((p1, p2, p3), dim=1)
-        return output
-
-
 class DotProductAttention(nn.Module):
     """缩放点积注意力"""
     def __init__(self, dropout):

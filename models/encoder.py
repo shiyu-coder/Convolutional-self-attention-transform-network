@@ -1,7 +1,7 @@
 import torch.nn as nn
 import torch
 import math
-from attention import ParallelInception, MultiHeadAttention
+from attention import MultiHeadAttention
 from utils.positionalEncoding import PositionalEncoding
 from utils.addNorm import AddNorm
 from cnn import PCNN
@@ -37,11 +37,11 @@ class SingleEncoder(nn.Module):
 class CNNEncoder(nn.Module):
 
     def __init__(self, num_hiddens=128, num_heads=4, seq_len=4, cnn_layer1_num=2, cnn_layer2_num=0,
-                 enc_layer_num=2, input_size=(88, 200), drop_out=0.1, min_output_size=32):
+                 enc_layer_num=2, input_size=(88, 200), drop_out=0.1, min_output_size=32, attention=False):
         super(CNNEncoder, self).__init__()
         self.num_hiddens = num_hiddens
 
-        self.cnn = PCNN(num_hiddens, cnn_layer1_num, cnn_layer2_num, input_size)
+        self.cnn = PCNN(num_hiddens, cnn_layer1_num, cnn_layer2_num, input_size, attention)
         self.pe = PositionalEncoding(num_hiddens, 0)
         self.enc = SingleEncoder(enc_layer_num, num_hiddens, num_heads, seq_len, drop_out, min_output_size)
 
