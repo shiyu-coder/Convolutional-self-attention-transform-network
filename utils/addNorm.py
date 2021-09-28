@@ -9,3 +9,4 @@ class AddNorm(nn.Module):
 
     def forward(self, X, Y):
         return self.ln(self.dropout(Y) + X)
+

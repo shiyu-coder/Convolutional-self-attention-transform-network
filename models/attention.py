@@ -28,10 +28,10 @@ def transpose_output(X, num_heads):
     return X.reshape(X.shape[0], X.shape[1], -1)
 
 
-class AttentionInception(nn.Module):
+class ParallelInception(nn.Module):
 
     def __init__(self, in_channels, c1, c2, c3):
-        super(AttentionInception, self).__init__()
+        super(ParallelInception, self).__init__()
         # 单1x1卷积层
         self.p1_1 = nn.Conv2d(in_channels, c1, kernel_size=1)
         # 线路2，1 x 1卷积层后接3 x 3卷积层

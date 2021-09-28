@@ -1,62 +1,66 @@
 import torch.nn as nn
+import torch
 import math
-from attention import AttentionInception, MultiHeadAttention
+from attention import ParallelInception, MultiHeadAttention
 from utils.positionalEncoding import PositionalEncoding
 from utils.addNorm import AddNorm
+from cnn import PCNN
+
+
+class SingleEncoder(nn.Module):
+
+    def __init__(self, layer_num=2, num_hiddens=128, num_heads=4, seq_len=4, drop_out=0.1, min_output_size=32):
+        super(SingleEncoder, self).__init__()
+        self.layer_num = layer_num
+
+        self.mha = []
+        self.an = []
+        self.li = []
+
+        seq_size = num_hiddens
+        for i in range(layer_num):
+            self.mha.append(MultiHeadAttention(seq_size, seq_size, seq_size, seq_size, num_heads, drop_out))
+            self.an.append(AddNorm((seq_len, seq_size), drop_out))
+            self.li.append(nn.Linear(seq_size, max(min_output_size, seq_size//2)))
+            seq_size = max(min_output_size, seq_size//2)
+
+        self.actFun = nn.ELU()
+        self.key_size = seq_size
+
+    def forward(self, x):
+        for i in range(self.layer_num):
+            x = self.an[i](x, self.mha[i](x, x, x))
+            x = self.actFun(self.li[i](x))
+        return x
 
 
 class CNNEncoder(nn.Module):
 
-    def __init__(self, num_hiddens, num_heads, norm_shape, drop_out):
+    def __init__(self, num_hiddens=128, num_heads=4, seq_len=4, cnn_layer1_num=2, cnn_layer2_num=0,
+                 enc_layer_num=2, input_size=(88, 200), drop_out=0.1, min_output_size=32):
         super(CNNEncoder, self).__init__()
         self.num_hiddens = num_hiddens
 
-        self.b1 = nn.Sequential(nn.BatchNorm2d(3),
-                                nn.Conv2d(3, 4, kernel_size=3, stride=2, padding=3),
-                                nn.ELU(),
-                                nn.MaxPool2d(kernel_size=2, stride=2, padding=1))
-
-        self.b2 = nn.Sequential(AttentionInception(4, 8, (4, 8), (4, 8)),
-                                nn.ELU(),
-                                nn.MaxPool2d(kernel_size=3, stride=2, padding=1),
-                                AttentionInception(24, 16, (16, 32), (16, 32)),
-                                nn.ELU(),
-                                nn.MaxPool2d(kernel_size=3, stride=2, padding=1))
-        # 模块3
-        self.b3 = nn.Sequential(nn.Flatten(),
-                                nn.Linear(6240, num_hiddens),
-                                nn.ELU(),)
-
-        # 位置编码
+        self.cnn = PCNN(num_hiddens, cnn_layer1_num, cnn_layer2_num, input_size)
         self.pe = PositionalEncoding(num_hiddens, 0)
+        self.enc = SingleEncoder(enc_layer_num, num_hiddens, num_heads, seq_len, drop_out, min_output_size)
 
-        # 自注意力模块
-        self.actFun = nn.ELU()
-
-        self.at1 = MultiHeadAttention(num_hiddens, num_hiddens, num_hiddens, num_hiddens, num_heads, drop_out)
-        self.norm1 = AddNorm(norm_shape, drop_out)
-        self.dense1 = nn.Linear(num_hiddens, 64)
-        self.at2 = MultiHeadAttention(64, 64, 64, 64, num_heads, drop_out)
-        self.norm2 = AddNorm((norm_shape[0], 64), drop_out)
-        self.dense2 = nn.Linear(64, 32)
-
-        self.tmp_dense = nn.Linear(32, 1)
+        self.key_size = self.enc.key_size
 
     def forward(self, x):
         batch_num = x.shape[0]
         x = x.reshape(-1, x.shape[2], x.shape[3], x.shape[4])
-        x = self.b1(x)
-        x = self.b2(x)
-        x = self.b3(x)
-
+        x = self.cnn(x)
         x = x.reshape(batch_num, -1, x.shape[1])
         x = self.pe(x * math.sqrt(self.num_hiddens))
-
-        y = self.norm1(x, self.at1(x, x, x))
-        y = self.actFun(self.dense1(y))
-        y = self.norm2(y, self.at2(y, y, y))
-        y = self.actFun(self.dense2(y))
-
-        # x = self.tmp_dense(x)
+        y = self.enc(x)
 
         return x, y
+
+
+if __name__ == '__main__':
+    X = torch.rand(size=(8, 4, 3, 88, 200))
+    net = CNNEncoder(num_hiddens=128, num_heads=4, seq_len=4, enc_layer_num=2, cnn_layer1_num=3, cnn_layer2_num=1)
+    X = net(X)
+    print(X[0].shape)
+    print(X[1].shape)
