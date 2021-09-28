@@ -18,8 +18,10 @@ warnings.filterwarnings('ignore')
 class Exp_model:
     def __init__(self, args):
         self.args = args
-        self.device = self._acquire_device()
-        self.model = self._build_model().to(self.device)
+        self.use_gpu = self._acquire_device()
+        self.model = self._build_model()
+        if self.use_gpu:
+            self.model = self.model.cuda()
 
     def _build_model(self):
         model_dict = {
@@ -45,13 +47,15 @@ class Exp_model:
 
     def _acquire_device(self):
         if self.args.use_gpu:
-            os.environ["CUDA_VISIBLE_DEVICES"] = str(self.args.gpu)
-            device = torch.device('cuda:0')
+            # os.environ["CUDA_VISIBLE_DEVICES"] = str(self.args.gpu)
+            # device = torch.device('cuda:0')
             print('Use GPU: cuda:0')
+            return True
         else:
-            device = torch.device('cpu')
+            # device = torch.device('cpu')
             print('Use CPU')
-        return device
+            return False
+        # return device
 
     def _get_data(self, mode):
         args = self.args
@@ -97,6 +101,8 @@ class Exp_model:
 
     def _select_criterion(self):
         criterion = nn.MSELoss()
+        if self.use_gpu:
+            criterion = criterion.cuda()
         return criterion
 
     def train(self, setting):
@@ -126,15 +132,16 @@ class Exp_model:
                 total_count += 1
                 model_optim.zero_grad()
 
-                batch_x = batch_x.to(self.device)
-                batch_y = batch_y.to(self.device)
+                if self.use_gpu:
+                    batch_x, batch_y = batch_x.cuda(), batch_y.cuda()
 
                 outputs = self.model(batch_x)
 
                 batch_y = batch_y.float()
 
                 loss = criterion(outputs, batch_y)
-                loss = loss.cpu()
+                if self.use_gpu:
+                    loss = loss.cpu()
 
                 train_loss.append(loss.item())
 
@@ -174,17 +181,17 @@ class Exp_model:
             global vali_test_count
             vali_test_count += 1
 
-            batch_x = batch_x.to(self.device)
-            batch_y = batch_y.to(self.device)
+            if self.use_gpu:
+                batch_x, batch_y = batch_x.cuda(), batch_y.cuda()
 
             outputs = self.model(batch_x)
 
             batch_y = batch_y.float()
 
-            pred = outputs.detach().cpu()
-            true = batch_y.detach().cpu()
+            loss = criterion(outputs, batch_y)
 
-            loss = criterion(pred, true)
+            if self.use_gpu:
+                loss = loss.cpu()
 
             total_loss.append(loss)
         total_loss = np.average(total_loss)
@@ -200,8 +207,8 @@ class Exp_model:
         trues = []
 
         for i, (batch_x, batch_y) in enumerate(test_loader):
-            batch_x = batch_x.to(self.device)
-            batch_y = batch_y.to(self.device)
+            if self.use_gpu:
+                batch_x, batch_y = batch_x.cuda(), batch_y.cuda()
 
             outputs = self.model(batch_x)
 
