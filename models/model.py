@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
-from encoder import CNNEncoder
-from decoder import Decoder
+from models.encoder import CNNEncoder
+from models.decoder import Decoder
 
 
 class CSATNet(nn.Module):

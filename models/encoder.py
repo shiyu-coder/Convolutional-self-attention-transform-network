@@ -1,10 +1,10 @@
 import torch.nn as nn
 import torch
 import math
-from attention import MultiHeadAttention
+from models.attention import MultiHeadAttention
 from utils.positionalEncoding import PositionalEncoding
 from utils.addNorm import AddNorm
-from cnn import PCNN
+from models.cnn import PCNN
 
 
 class SingleEncoder(nn.Module):

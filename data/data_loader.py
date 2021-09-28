@@ -14,15 +14,26 @@ class ADDataset(Dataset):
         self.labels = self.get_labels(label_dir)
         self.transform = transform
         self.seq_len = seq_len
-        if mode == 'train':
-            self.data = self.data[:len(self.data) * 80 // 100]
-            self.labels = self.labels[:len(self.labels) * 80 // 100]
-        elif mode == 'valid':
-            self.data = self.data[len(self.data) * 80 // 100:len(self.data) * 90 // 100]
-            self.labels = self.labels[len(self.labels) * 80 // 100:len(self.labels) * 90 // 100]
-        elif mode == 'test':
-            self.data = self.data[len(self.data) * 90 // 100:]
-            self.labels = self.labels[len(self.labels) * 90 // 100:]
+        if len(self.data) <= 10000:
+            if mode == 'train':
+                self.data = self.data[:len(self.data) * 80 // 100]
+                self.labels = self.labels[:len(self.labels) * 80 // 100]
+            elif mode == 'valid':
+                self.data = self.data[len(self.data) * 80 // 100:len(self.data) * 90 // 100]
+                self.labels = self.labels[len(self.labels) * 80 // 100:len(self.labels) * 90 // 100]
+            elif mode == 'test':
+                self.data = self.data[len(self.data) * 90 // 100:]
+                self.labels = self.labels[len(self.labels) * 90 // 100:]
+        else:
+            if mode == 'train':
+                self.data = self.data[:len(self.data) * 90 // 100]
+                self.labels = self.labels[:len(self.labels) * 90 // 100]
+            elif mode == 'valid':
+                self.data = self.data[len(self.data) * 90 // 100:len(self.data) * 95 // 100]
+                self.labels = self.labels[len(self.labels) * 90 // 100:len(self.labels) * 95 // 100]
+            elif mode == 'test':
+                self.data = self.data[len(self.data) * 95 // 100:]
+                self.labels = self.labels[len(self.labels) * 95 // 100:]
 
     def get_data(self, data_dir):
         data = []

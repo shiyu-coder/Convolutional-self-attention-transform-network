@@ -1,5 +1,5 @@
 import torch.nn as nn
-from attention import MaskedMultiHeadAttention
+from models.attention import MaskedMultiHeadAttention
 from utils.addNorm import AddNorm
 
 
