@@ -1,4 +1,5 @@
 from data.data_loader import ADDataset
+from compares.cmp_model import NVIDIA_ORIGIN
 from models.model import CSATNet
 import torch
 import torch.nn as nn
@@ -9,6 +10,7 @@ import os
 import time
 import torchvision.transforms as transforms
 import warnings
+from tensorboardX import SummaryWriter
 from utils.tools import EarlyStopping, adjust_learning_rate
 from utils.metrics import metric
 
@@ -23,9 +25,13 @@ class Exp_model:
         if self.use_gpu:
             self.model = self.model.cuda()
 
+        if self.args.tensorboard:
+            self.writer = SummaryWriter(comment='CSATNet_exp_comment', filename_suffix="CSATNet_exp_suffix")
+
     def _build_model(self):
         model_dict = {
             'CSATNet': CSATNet,
+            'NVIDIA_ORIGIN': NVIDIA_ORIGIN,
         }
         if self.args.model == 'CSATNet':
             model = model_dict[self.args.model](
@@ -42,6 +48,8 @@ class Exp_model:
                 self.args.min_output_size,
                 self.args.attention,
             )
+        elif self.args.model == 'NVIDIA_ORIGIN':
+            model = model_dict[self.args.model]()
 
         return model.float()
 
@@ -143,9 +151,12 @@ class Exp_model:
                 if self.use_gpu:
                     loss = loss.cpu()
 
+                if self.args.tensorboard:
+                    self.writer.add_scalar("Train loss", loss, global_step=epoch*train_steps+i)
+
                 train_loss.append(loss.item())
 
-                if (i + 1) % 100 == 0:
+                if (i + 1) % 200 == 0:
                     print("\titers: {0}, epoch: {1} | loss: {2:.7f}".format(i + 1, epoch + 1, loss.item()))
                     speed = (time.time() - time_now) / iter_count
                     left_time = speed * ((self.args.epoch - epoch) * train_steps - i)
@@ -159,6 +170,9 @@ class Exp_model:
             train_loss = np.average(train_loss)
 
             vali_loss = self.vali(vali_loader, criterion)
+
+            if self.args.tensorboard:
+                self.writer.add_scalar("Valid loss", vali_loss, global_step=epoch)
 
             print("Epoch: {0}, Steps: {1} | Train Loss: {2:.7f} Vali Loss: {3:.7f}".format(
                 epoch + 1, train_steps, train_loss, vali_loss))
@@ -188,7 +202,9 @@ class Exp_model:
             loss = criterion(outputs, batch_y)
 
             if self.use_gpu:
-                loss = loss.cpu()
+                loss = loss.cpu().detach().numpy()
+            else:
+                loss = loss.detach().numpy()
 
             total_loss.append(loss)
         total_loss = np.average(total_loss)

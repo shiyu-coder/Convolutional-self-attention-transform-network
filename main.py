@@ -5,7 +5,8 @@ from experiment.exp_model import Exp_model
 
 parser = argparse.ArgumentParser(description='CSATNet: Convolutional Self-attention Transform Network')
 
-parser.add_argument('--model', type=str, default='CSATNet', help='model for experiment, options: [CSATNet]')
+parser.add_argument('--model', type=str, default='CSATNet',
+                    help='model for experiment, options: [CSATNet, NVIDIA_ORIGIN]')
 parser.add_argument('--data', type=str, default='ADDataset', help='dataset for experiment, options: [ADDataset]')
 parser.add_argument('--data_path', type=str, default='DataSet', help='data file')
 parser.add_argument('--label_path', type=str, default='ADLabel.csv', help='label data file')
@@ -19,7 +20,7 @@ parser.add_argument('--enc_layer_num', type=int, default=2, help='the num of sel
 parser.add_argument('--dec_layer_num', type=int, default=2, help='the num of self-attention layer in decoder')
 parser.add_argument('--input_size', type=tuple, default=(88, 200), help='input size(image size)')
 parser.add_argument('--label_size', type=int, default=1, help='the num of label for one piece of input')
-parser.add_argument('--drop_out', type=float, default=0.01, help='drop out probability')
+parser.add_argument('--drop_out', type=float, default=0.05, help='drop out probability')
 parser.add_argument('--min_output_size', type=int, default=32, help='the minimize size of output size of encoder')
 parser.add_argument('--attention', type=bool, default=False, help='use Parallel Self-attention Inception')
 
@@ -33,6 +34,7 @@ parser.add_argument('--lr_adj', type=str, default='type1', help='adjust learning
 parser.add_argument('--use_gpu', type=bool, default=True, help='use gpu')
 parser.add_argument('--gpu', type=int, default=0, help='gpu')
 parser.add_argument('--num_workers', type=int, default=0, help='data loader num workers')
+parser.add_argument('--tensorboard', type=bool, default=False, help='use tensorboard')
 
 args = parser.parse_args()
 
