@@ -37,13 +37,20 @@ class CSATNet_multitask(nn.Module):
         self.li = nn.Sequential(
             nn.Linear(num_hiddens, 64),
             nn.ELU(),
-            nn.Linear(64, label_size)
+            nn.Linear(64, 32)
         )
 
         self.key_size = self.enc.key_size
         self.dec = Decoder(dec_layer_num, self.key_size, num_hiddens, num_heads, seq_len, drop_out)
 
-        self.dense = nn.Linear(num_hiddens, label_size)
+        self.dense = nn.Linear(num_hiddens, 32)
+
+        self.output_li = nn.Sequential(
+            nn.ELU(),
+            nn.Linear(64, 32),
+            nn.ELU(),
+            nn.Linear(32, label_size)
+        )
 
     def forward(self, x):
         batch_num = x.shape[0]
@@ -56,7 +63,8 @@ class CSATNet_multitask(nn.Module):
         cross = self.enc(x)
         output2 = self.dec(x, cross)
         output2 = self.dense(output2)
-        output = torch.cat((output1, output2), dim=1)
+        output = torch.cat((output1, output2), dim=2)
+        output = self.output_li(output)
         return output
 
 
