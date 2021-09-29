@@ -1,6 +1,6 @@
 from data.data_loader import ADDataset
 from compares.cmp_model import NVIDIA_ORIGIN
-from models.model import CSATNet, PSACNN, SACNN, FSACNN, CNN
+from models.model import CSATNet, PSACNN, SACNN, FSACNN, CNN, CSATNet_multitask
 import torch
 import torch.nn as nn
 from torch import optim
@@ -31,6 +31,7 @@ class Exp_model:
     def _build_model(self):
         model_dict = {
             'CSATNet': CSATNet,
+            'CSATNet_multitask': CSATNet_multitask,
             'NVIDIA_ORIGIN': NVIDIA_ORIGIN,
             'PSACNN': PSACNN,
             'SACNN': SACNN,
@@ -38,6 +39,19 @@ class Exp_model:
             'CNN': CNN,
         }
         if self.args.model == 'CSATNet':
+            model = model_dict[self.args.model](
+                self.args.num_hiddens,
+                self.args.num_heads,
+                self.args.seq_len,
+                self.args.cnn_layer1_num,
+                self.args.cnn_layer2_num,
+                self.args.enc_layer_num,
+                self.args.dec_layer_num,
+                self.args.label_size,
+                self.args.drop_out,
+                self.args.min_output_size,
+            )
+        if self.args.model == 'CSATNet_multitask':
             model = model_dict[self.args.model](
                 self.args.num_hiddens,
                 self.args.num_heads,
@@ -121,6 +135,7 @@ class Exp_model:
             mode=mode,
             seq_len=args.seq_len,
             transform=transform,
+            multitask=args.multitask,
         )
 
         data_loader = DataLoader(

@@ -6,18 +6,19 @@ from experiment.exp_model import Exp_model
 parser = argparse.ArgumentParser(description='CSATNet: Convolutional Self-attention Transform Network')
 
 parser.add_argument('--model', type=str, default='CSATNet',
-                    help='model for experiment, options: [CSATNet, SACNN, FSACNN, PSACNN, CNN, NVIDIA_ORIGIN]')
+                    help='model for experiment, options: [CSATNet, CSATNet_multitask, SACNN, FSACNN, PSACNN, CNN, NVIDIA_ORIGIN]')
 parser.add_argument('--data', type=str, default='ADDataset', help='dataset for experiment, options: [ADDataset]')
 parser.add_argument('--data_path', type=str, default='DataSet', help='data file')
 parser.add_argument('--label_path', type=str, default='ADLabel.csv', help='label data file')
+parser.add_argument('--multitask', type=bool, default=False, help='multi task learning')
 
 parser.add_argument('--num_hiddens', type=int, default=128, help='the length of input of decoder')
 parser.add_argument('--num_heads', type=int, default=4, help='the num of heads of multi-head self-attention')
-parser.add_argument('--seq_len', type=int, default=4, help='the length of history sequence')
+parser.add_argument('--seq_len', type=int, default=8, help='the length of history sequence')
 parser.add_argument('--cnn_layer1_num', type=int, default=2, help='the num of layer in the first part of CNN')
-parser.add_argument('--cnn_layer2_num', type=int, default=1, help='the num of layer in the second part of CNN')
-parser.add_argument('--enc_layer_num', type=int, default=2, help='the num of self-attention layer in encoder')
-parser.add_argument('--dec_layer_num', type=int, default=2, help='the num of self-attention layer in decoder')
+parser.add_argument('--cnn_layer2_num', type=int, default=2, help='the num of layer in the second part of CNN')
+parser.add_argument('--enc_layer_num', type=int, default=3, help='the num of self-attention layer in encoder')
+parser.add_argument('--dec_layer_num', type=int, default=3, help='the num of self-attention layer in decoder')
 parser.add_argument('--input_size', type=tuple, default=(88, 200), help='input size(image size)')
 parser.add_argument('--label_size', type=int, default=1, help='the num of label for one piece of input')
 parser.add_argument('--drop_out', type=float, default=0.05, help='drop out probability')
@@ -25,7 +26,7 @@ parser.add_argument('--min_output_size', type=int, default=32, help='the minimiz
 parser.add_argument('--attention', type=bool, default=False, help='use Parallel Self-attention Inception')
 
 parser.add_argument('--itr', type=int, default=1, help='experiments times')
-parser.add_argument('--epoch', type=int, default=6, help='train epochs')
+parser.add_argument('--epoch', type=int, default=10, help='train epochs')
 parser.add_argument('--batch_size', type=int, default=4, help='batch size of train input data')
 parser.add_argument('--patience', type=int, default=3, help='early stopping patience')
 parser.add_argument('--learning_rate', type=float, default=0.0001, help='optimizer learning rate')

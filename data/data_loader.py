@@ -8,12 +8,13 @@ from PIL import Image
 
 class ADDataset(Dataset):
 
-    def __init__(self, data_dir, label_dir, seq_len, transform=None, mode='train'):
+    def __init__(self, data_dir, label_dir, seq_len, transform=None, mode='train', multitask=False):
         super(ADDataset, self).__init__()
         self.data = self.get_data(data_dir)
         self.labels = self.get_labels(label_dir)
         self.transform = transform
         self.seq_len = seq_len
+        self.mulitask = multitask
         if len(self.data) <= 10000:
             if mode == 'train':
                 self.data = self.data[:len(self.data) * 80 // 100]
@@ -63,8 +64,12 @@ class ADDataset(Dataset):
             imgs.append(img)
 
         seq_img = torch.stack(imgs, 0)
-
-        seq_label = torch.tensor(self.labels[index+1:index+self.seq_len+1])
+        if self.mulitask:
+            single_label = self.labels[index + 1:index + self.seq_len + 1]
+            single_label.extend(self.labels[index + 1:index + self.seq_len + 1])
+            seq_label = torch.tensor(single_label)
+        else:
+            seq_label = torch.tensor(self.labels[index+1:index+self.seq_len+1])
         return seq_img, seq_label
 
     def __len__(self):
