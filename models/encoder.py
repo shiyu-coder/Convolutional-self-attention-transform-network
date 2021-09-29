@@ -4,7 +4,7 @@ import math
 from models.attention import MultiHeadAttention
 from utils.positionalEncoding import PositionalEncoding
 from utils.addNorm import AddNorm
-from models.cnn import PCNN
+from models.cnn import PCNN, SACNNLayer, CNNLayer
 
 
 class SingleEncoder(nn.Module):
@@ -41,14 +41,62 @@ class SingleEncoder(nn.Module):
         return x
 
 
-class CNNEncoder(nn.Module):
+class PCNNEncoder(nn.Module):
 
     def __init__(self, num_hiddens=128, num_heads=4, seq_len=4, cnn_layer1_num=2, cnn_layer2_num=0,
                  enc_layer_num=2, input_size=(88, 200), drop_out=0.1, min_output_size=32, attention=False):
-        super(CNNEncoder, self).__init__()
+        super(PCNNEncoder, self).__init__()
         self.num_hiddens = num_hiddens
 
         self.cnn = PCNN(num_hiddens, cnn_layer1_num, cnn_layer2_num, input_size, attention)
+        self.pe = PositionalEncoding(num_hiddens, 0)
+        self.enc = SingleEncoder(enc_layer_num, num_hiddens, num_heads, seq_len, drop_out, min_output_size)
+
+        self.key_size = self.enc.key_size
+
+    def forward(self, x):
+        batch_num = x.shape[0]
+        x = x.reshape(-1, x.shape[2], x.shape[3], x.shape[4])
+        x = self.cnn(x)
+        x = x.reshape(batch_num, -1, x.shape[1])
+        x = self.pe(x * math.sqrt(self.num_hiddens))
+        y = self.enc(x)
+
+        return x, y
+
+
+class CNNEncoder(nn.Module):
+
+    def __init__(self, num_hiddens=128, num_heads=4, seq_len=4, cnn_layer1_num=2, cnn_layer2_num=0,
+                 enc_layer_num=2, drop_out=0.1, min_output_size=32):
+        super(CNNEncoder, self).__init__()
+        self.num_hiddens = num_hiddens
+
+        self.cnn = CNNLayer(num_hiddens, cnn_layer1_num, cnn_layer2_num)
+        self.pe = PositionalEncoding(num_hiddens, 0)
+        self.enc = SingleEncoder(enc_layer_num, num_hiddens, num_heads, seq_len, drop_out, min_output_size)
+
+        self.key_size = self.enc.key_size
+
+    def forward(self, x):
+        batch_num = x.shape[0]
+        x = x.reshape(-1, x.shape[2], x.shape[3], x.shape[4])
+        x = self.cnn(x)
+        x = x.reshape(batch_num, -1, x.shape[1])
+        x = self.pe(x * math.sqrt(self.num_hiddens))
+        y = self.enc(x)
+
+        return x, y
+
+
+class SACNNEncoder(nn.Module):
+
+    def __init__(self, num_hiddens=128, num_heads=4, seq_len=4, cnn_layer1_num=2, cnn_layer2_num=0,
+                 enc_layer_num=2, drop_out=0.1, min_output_size=32):
+        super(SACNNEncoder, self).__init__()
+        self.num_hiddens = num_hiddens
+
+        self.cnn = SACNNLayer(num_hiddens, cnn_layer1_num, cnn_layer2_num)
         self.pe = PositionalEncoding(num_hiddens, 0)
         self.enc = SingleEncoder(enc_layer_num, num_hiddens, num_heads, seq_len, drop_out, min_output_size)
 

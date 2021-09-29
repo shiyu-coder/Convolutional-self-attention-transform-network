@@ -6,7 +6,7 @@ from experiment.exp_model import Exp_model
 parser = argparse.ArgumentParser(description='CSATNet: Convolutional Self-attention Transform Network')
 
 parser.add_argument('--model', type=str, default='CSATNet',
-                    help='model for experiment, options: [CSATNet, NVIDIA_ORIGIN]')
+                    help='model for experiment, options: [CSATNet, SACNN, FSACNN, PSACNN, CNN, NVIDIA_ORIGIN]')
 parser.add_argument('--data', type=str, default='ADDataset', help='dataset for experiment, options: [ADDataset]')
 parser.add_argument('--data_path', type=str, default='DataSet', help='data file')
 parser.add_argument('--label_path', type=str, default='ADLabel.csv', help='label data file')

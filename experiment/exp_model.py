@@ -1,6 +1,6 @@
 from data.data_loader import ADDataset
 from compares.cmp_model import NVIDIA_ORIGIN
-from models.model import CSATNet
+from models.model import CSATNet, PSACNN, SACNN, FSACNN, CNN
 import torch
 import torch.nn as nn
 from torch import optim
@@ -32,6 +32,10 @@ class Exp_model:
         model_dict = {
             'CSATNet': CSATNet,
             'NVIDIA_ORIGIN': NVIDIA_ORIGIN,
+            'PSACNN': PSACNN,
+            'SACNN': SACNN,
+            'FSACNN': FSACNN,
+            'CNN': CNN,
         }
         if self.args.model == 'CSATNet':
             model = model_dict[self.args.model](
@@ -42,11 +46,36 @@ class Exp_model:
                 self.args.cnn_layer2_num,
                 self.args.enc_layer_num,
                 self.args.dec_layer_num,
-                self.args.input_size,
                 self.args.label_size,
                 self.args.drop_out,
                 self.args.min_output_size,
+            )
+        elif self.args.model == 'PSACNN':
+            model = model_dict[self.args.model](
+                self.args.num_hiddens,
+                self.args.cnn_layer1_num,
+                self.args.cnn_layer2_num,
+                self.args.input_size,
+                self.args.label_size,
                 self.args.attention,
+            )
+        elif self.args.model == 'SACNN':
+            model = model_dict[self.args.model](
+                self.args.cnn_layer1_num,
+                self.args.cnn_layer2_num,
+                self.args.label_size,
+            )
+        elif self.args.model == 'FSACNN':
+            model = model_dict[self.args.model](
+                self.args.cnn_layer1_num,
+                self.args.cnn_layer2_num,
+                self.args.label_size,
+            )
+        elif self.args.model == 'CNN':
+            model = model_dict[self.args.model](
+                self.args.cnn_layer1_num,
+                self.args.cnn_layer2_num,
+                self.args.label_size,
             )
         elif self.args.model == 'NVIDIA_ORIGIN':
             model = model_dict[self.args.model]()

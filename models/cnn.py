@@ -2,6 +2,73 @@ import torch
 import torch.nn as nn
 
 
+class SelfAttentionConv(nn.Module):
+    def __init__(self, in_channels, c1, c2):
+        super(SelfAttentionConv, self).__init__()
+        self.p1 = nn.Conv2d(in_channels, c1, kernel_size=1)
+        self.p2 = nn.Conv2d(c1, c2, kernel_size=3, padding=1)
+        self.p3 = nn.Conv2d(in_channels, c2, kernel_size=1)
+        self.actFun = nn.ELU()
+
+    def forward(self, x):
+        x1 = self.p2(self.actFun(self.p1(x)))
+        x2 = self.actFun(self.p3(x))
+        x = x1 * x2
+        return x
+
+
+class SACNNLayer(nn.Module):
+    def __init__(self, num_hiddens=128, cnn_layer1_num=3, cnn_layer2_num=2):
+        super(SACNNLayer, self).__init__()
+        self.cnn = nn.Sequential()
+        in_channels = [3, 24, 36, 48, 64, 80, 128, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256]
+        for i in range(0, cnn_layer1_num):
+            self.cnn.add_module("layer1-"+str(i), nn.Conv2d(in_channels[i], in_channels[i+1], kernel_size=5, stride=2))
+            self.cnn.add_module("actFun-" + str(i), nn.ELU())
+        self.cnn.add_module("pool1", nn.MaxPool2d(kernel_size=3, stride=2, padding=1))
+        for i in range(cnn_layer1_num, cnn_layer1_num + cnn_layer2_num):
+            self.cnn.add_module("layer1-" + str(i), SelfAttentionConv(in_channels[i], in_channels[i+1]//2, in_channels[i+1]))
+        self.cnn.add_module("pool2", nn.MaxPool2d(kernel_size=3, stride=2, padding=1))
+        in_channel = in_channels[cnn_layer1_num + cnn_layer2_num]
+        self.dense = nn.Sequential(
+            nn.Flatten(),
+            nn.Linear(in_channel * 12, 256),
+            nn.ELU(),
+            nn.Linear(256, num_hiddens),
+        )
+
+    def forward(self, x):
+        x = self.cnn(x)
+        x = self.dense(x)
+        return x
+
+
+class CNNLayer(nn.Module):
+    def __init__(self, num_hiddens=128, cnn_layer1_num=3, cnn_layer2_num=2):
+        super(CNNLayer, self).__init__()
+        self.cnn = nn.Sequential()
+        in_channels = [3, 24, 36, 48, 64, 80, 128, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256]
+        for i in range(0, cnn_layer1_num):
+            self.cnn.add_module("layer1-"+str(i), nn.Conv2d(in_channels[i], in_channels[i+1], kernel_size=5, stride=2))
+            self.cnn.add_module("actFun-" + str(i), nn.ELU())
+        self.cnn.add_module("pool1", nn.MaxPool2d(kernel_size=3, stride=2, padding=1))
+        for i in range(cnn_layer1_num, cnn_layer1_num + cnn_layer2_num):
+            self.cnn.add_module("layer1-" + str(i), nn.Conv2d(in_channels[i], in_channels[i+1], kernel_size=3, stride=1))
+        self.cnn.add_module("pool2", nn.MaxPool2d(kernel_size=3, stride=2, padding=1))
+        in_channel = in_channels[cnn_layer1_num + cnn_layer2_num]
+        self.dense = nn.Sequential(
+            nn.Flatten(),
+            nn.Linear(in_channel * 30, 256),
+            nn.ELU(),
+            nn.Linear(256, num_hiddens),
+        )
+
+    def forward(self, x):
+        x = self.cnn(x)
+        x = self.dense(x)
+        return x
+
+
 class ParallelInception(nn.Module):
 
     def __init__(self, in_channels, c1, c2, c3):
