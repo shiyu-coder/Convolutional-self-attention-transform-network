@@ -41,6 +41,40 @@ class SingleEncoder(nn.Module):
         return x
 
 
+class SALayer(nn.Module):
+
+    def __init__(self, layer_num=2, c1=128, c2=1, num_heads=4, seq_len=4, drop_out=0.1):
+        super(SALayer, self).__init__()
+        self.layer_num = layer_num
+
+        self.mha = []
+        self.an = []
+        self.li = []
+
+        channels = [c1, 64, 32, 16, c2]
+
+        if torch.cuda.is_available():
+            for i in range(layer_num):
+                self.mha.append(MultiHeadAttention(channels[i], channels[i], channels[i],
+                                                   channels[i], num_heads, drop_out).cuda())
+                self.an.append(AddNorm((seq_len, channels[i]), drop_out).cuda())
+                self.li.append(nn.Linear(channels[i], channels[i+1]).cuda())
+        else:
+            for i in range(layer_num):
+                self.mha.append(MultiHeadAttention(channels[i], channels[i], channels[i],
+                                                   channels[i], num_heads, drop_out))
+                self.an.append(AddNorm((seq_len, channels[i]), drop_out))
+                self.li.append(nn.Linear(channels[i], channels[i + 1]))
+
+        self.actFun = nn.ELU()
+
+    def forward(self, x):
+        for i in range(self.layer_num):
+            x = self.an[i](x, self.mha[i](x, x, x))
+            x = self.actFun(self.li[i](x))
+        return x
+
+
 class PCNNEncoder(nn.Module):
 
     def __init__(self, num_hiddens=128, num_heads=4, seq_len=4, cnn_layer1_num=2, cnn_layer2_num=0,

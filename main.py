@@ -7,7 +7,8 @@ parser = argparse.ArgumentParser(description='CSATNet: Convolutional Self-attent
 
 parser.add_argument('--model', type=str, default='CSATNet',
                     help='model for experiment, options: [CSATNet, CSATNet_multitask, SACNN, FSACNN, PSACNN, CNN, NVIDIA_ORIGIN]')
-parser.add_argument('--data', type=str, default='ADDataset', help='dataset for experiment, options: [ADDataset]')
+parser.add_argument('--data', type=str, default='ADDataset',
+                    help='dataset for experiment, options: [ADDataset, ADHDataset]')
 parser.add_argument('--data_path', type=str, default='DataSet', help='data file')
 parser.add_argument('--label_path', type=str, default='ADLabel.csv', help='label data file')
 parser.add_argument('--multitask', type=bool, default=False, help='multi task learning')
@@ -19,6 +20,7 @@ parser.add_argument('--cnn_layer1_num', type=int, default=2, help='the num of la
 parser.add_argument('--cnn_layer2_num', type=int, default=2, help='the num of layer in the second part of CNN')
 parser.add_argument('--enc_layer_num', type=int, default=3, help='the num of self-attention layer in encoder')
 parser.add_argument('--dec_layer_num', type=int, default=3, help='the num of self-attention layer in decoder')
+parser.add_argument('--vector_num', type=int, default=3, help='eigenvector length of convolution and timing output')
 parser.add_argument('--input_size', type=tuple, default=(88, 200), help='input size(image size)')
 parser.add_argument('--label_size', type=int, default=1, help='the num of label for one piece of input')
 parser.add_argument('--drop_out', type=float, default=0.05, help='drop out probability')
@@ -45,9 +47,9 @@ print('Args in experiment:')
 print(args)
 
 for ii in range(args.itr):
-    setting = '{}-{}-nhi{}-nhe{}-sl{}-cl1n{}-cl2n{}-elnu{}-dln{}-is{}-ls{}-do{}-mos{}-a{}-{}'.format(
+    setting = '{}-{}-nhi{}-nhe{}-sl{}-cl1n{}-cl2n{}-eln{}-dln{}-vn{}-is{}-ls{}-do{}-mos{}-a{}-{}'.format(
         args.model, args.data, args.num_hiddens, args.num_heads, args.seq_len, args.cnn_layer1_num, args.cnn_layer2_num,
-        args.enc_layer_num, args.dec_layer_num, args.input_size, args.label_size, args.drop_out, args.min_output_size,
+        args.enc_layer_num, args.dec_layer_num, args.vector_num, args.input_size, args.label_size, args.drop_out, args.min_output_size,
         args.attention, ii)
 
     exp = Exp_model(args)

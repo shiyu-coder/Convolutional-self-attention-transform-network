@@ -1,9 +1,12 @@
 import torch
+import torchvision.transforms as transforms
 import os
+from torch.utils.data import DataLoader
 import numpy as np
 import pandas as pd
 from torch.utils.data import Dataset
 from PIL import Image
+import h5py
 
 
 class ADDataset(Dataset):
@@ -75,3 +78,69 @@ class ADDataset(Dataset):
     def __len__(self):
         return len(self.data) - self.seq_len
 
+
+class ADHDataset(Dataset):
+    def __init__(self, data_dir, seq_len, transform=None, mode='train'):
+        super(ADHDataset, self).__init__()
+        if mode == "train":
+            data_dir = os.path.join(data_dir, "SeqTrain")
+        else:
+            data_dir = os.path.join(data_dir, "SeqVal")
+        self.data_h5s = self.get_data(data_dir)
+        self.transform = transform
+        self.seq_len = seq_len
+
+    def get_data(self, data_dir):
+        data_h5s = []
+        for root, _, files in os.walk(data_dir):
+            for file in files:
+                h5_path = os.path.join(root, file)
+                data_h5s.append(h5_path)
+        return data_h5s
+
+    def __getitem__(self, index):
+        pos = index // 200
+        rel_pos = index % 200
+        seq_label = []
+        seq_img = []
+        if rel_pos + self.seq_len > 200:
+            with h5py.File(self.data_h5s[pos], 'r') as f:
+                for i in range(rel_pos, 200):
+                    img = f['rgb'][i]
+                    if self.transform is not None:
+                        img = self.transform(img)
+                    seq_label.append([f['targets'][i][0], ])
+                    seq_img.append(img)
+            with h5py.File(self.data_h5s[pos+1], 'r') as f:
+                for i in range(0, rel_pos + self.seq_len - 200):
+                    img = f['rgb'][i]
+                    if self.transform is not None:
+                        img = self.transform(img)
+                    seq_label.append([f['targets'][i][0], ])
+                    seq_img.append(img)
+        else:
+            with h5py.File(self.data_h5s[pos], 'r') as f:
+                for i in range(rel_pos, rel_pos + self.seq_len):
+                    img = f['rgb'][i]
+                    if self.transform is not None:
+                        img = self.transform(img)
+                    seq_label.append([f['targets'][i][0], ])
+                    seq_img.append(img)
+        seq_imgs = torch.stack(seq_img, 0)
+        seq_labels = torch.tensor(seq_label)
+        return seq_imgs, seq_labels
+
+    def __len__(self):
+        return len(self.data_h5s) * 200 - self.seq_len
+
+
+if __name__ == "__main__":
+    train_transform = transforms.Compose([
+        transforms.ToTensor(),
+    ])
+    dataset = ADHDataset("../../test_dataset", 4, train_transform, mode='valid')
+    # dataset = ADDataset("../../DataSet", "../../ADLabel.csv", 4, transform=train_transform)
+    data_loader = DataLoader(dataset, batch_size=4, shuffle=True)
+    for i, (x, y) in enumerate(data_loader):
+        print(i, x.shape, y.shape)
+        # break

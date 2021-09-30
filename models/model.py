@@ -1,7 +1,7 @@
 import torch
 import math
 import torch.nn as nn
-from models.encoder import PCNNEncoder, SACNNEncoder, CNNEncoder, SingleEncoder
+from models.encoder import PCNNEncoder, SACNNEncoder, CNNEncoder, SingleEncoder, SALayer
 from models.decoder import Decoder
 from models.cnn import PCNN, SelfAttentionConv, CNNLayer
 from utils.positionalEncoding import PositionalEncoding
@@ -26,8 +26,8 @@ class CSATNet(nn.Module):
 
 
 class CSATNet_multitask(nn.Module):
-    def __init__(self, num_hiddens=128, num_heads=4, seq_len=4, cnn_layer1_num=2, cnn_layer2_num=0,
-                 enc_layer_num=2, dec_layer_num=2, label_size=1, drop_out=0.1, min_output_size=32):
+    def __init__(self, num_hiddens=128, num_heads=4, seq_len=4, cnn_layer1_num=2, cnn_layer2_num=0, enc_layer_num=2,
+                 dec_layer_num=2, vector_num=32, label_size=1, drop_out=0.1, min_output_size=32, attention=False):
         super(CSATNet_multitask, self).__init__()
         self.num_hiddens = num_hiddens
         self.cnn = CNNLayer(num_hiddens, cnn_layer1_num, cnn_layer2_num)
@@ -35,22 +35,25 @@ class CSATNet_multitask(nn.Module):
         self.enc = SingleEncoder(enc_layer_num, num_hiddens, num_heads, seq_len, drop_out, min_output_size)
 
         self.li = nn.Sequential(
-            nn.Linear(num_hiddens, 64),
+            nn.Linear(num_hiddens, (num_hiddens + vector_num)//2),
             nn.ELU(),
-            nn.Linear(64, 32)
+            nn.Linear((num_hiddens + vector_num)//2, vector_num)
         )
 
         self.key_size = self.enc.key_size
         self.dec = Decoder(dec_layer_num, self.key_size, num_hiddens, num_heads, seq_len, drop_out)
 
-        self.dense = nn.Linear(num_hiddens, 32)
+        self.dense = nn.Linear(num_hiddens, vector_num)
 
-        self.output_li = nn.Sequential(
-            nn.ELU(),
-            nn.Linear(64, 32),
-            nn.ELU(),
-            nn.Linear(32, label_size)
-        )
+        if attention:
+            self.output_li = SALayer(2, vector_num * 2, label_size, 4, seq_len, drop_out)
+        else:
+            self.output_li = nn.Sequential(
+                nn.ELU(),
+                nn.Linear(vector_num * 2, 64),
+                nn.ELU(),
+                nn.Linear(64, label_size)
+            )
 
     def forward(self, x):
         batch_num = x.shape[0]

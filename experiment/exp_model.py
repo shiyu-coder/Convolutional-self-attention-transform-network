@@ -1,4 +1,4 @@
-from data.data_loader import ADDataset
+from data.data_loader import ADDataset, ADHDataset
 from compares.cmp_model import NVIDIA_ORIGIN
 from models.model import CSATNet, PSACNN, SACNN, FSACNN, CNN, CSATNet_multitask
 import torch
@@ -60,9 +60,11 @@ class Exp_model:
                 self.args.cnn_layer2_num,
                 self.args.enc_layer_num,
                 self.args.dec_layer_num,
+                self.args.vector_num,
                 self.args.label_size,
                 self.args.drop_out,
                 self.args.min_output_size,
+                self.args.attention,
             )
         elif self.args.model == 'PSACNN':
             model = model_dict[self.args.model](
@@ -113,6 +115,7 @@ class Exp_model:
 
         data_dict = {
             'ADDataset': ADDataset,
+            'ADHDataset': ADHDataset,
         }
         Data = data_dict[self.args.data]
 
@@ -128,15 +131,22 @@ class Exp_model:
         transform = transforms.Compose([
             transforms.ToTensor(),
         ])
-
-        data_set = Data(
-            data_dir=args.data_path,
-            label_dir=args.label_path,
-            mode=mode,
-            seq_len=args.seq_len,
-            transform=transform,
-            multitask=args.multitask,
-        )
+        if self.args.data == 'ADDataset':
+            data_set = Data(
+                data_dir=args.data_path,
+                label_dir=args.label_path,
+                mode=mode,
+                seq_len=args.seq_len,
+                transform=transform,
+                multitask=args.multitask,
+            )
+        elif self.args.data == 'ADHDataset':
+            data_set = Data(
+                data_dir=args.data_path,
+                mode=mode,
+                seq_len=args.seq_len,
+                transform=transform,
+            )
 
         data_loader = DataLoader(
             data_set,
