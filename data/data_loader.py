@@ -103,29 +103,33 @@ class ADHDataset(Dataset):
         rel_pos = index % 200
         seq_label = []
         seq_img = []
-        if rel_pos + self.seq_len > 200:
+        if rel_pos + self.seq_len + 1 > 200:
             with h5py.File(self.data_h5s[pos], 'r') as f:
                 for i in range(rel_pos, 200):
                     img = f['rgb'][i]
                     if self.transform is not None:
                         img = self.transform(img)
-                    seq_label.append([f['targets'][i][0], ])
+                    if i != rel_pos:
+                        seq_label.append([f['targets'][i][0], ])
                     seq_img.append(img)
             with h5py.File(self.data_h5s[pos+1], 'r') as f:
-                for i in range(0, rel_pos + self.seq_len - 200):
-                    img = f['rgb'][i]
-                    if self.transform is not None:
-                        img = self.transform(img)
+                for i in range(0, rel_pos + self.seq_len - 200 + 1):
+                    if i != rel_pos + self.seq_len - 200:
+                        img = f['rgb'][i]
+                        if self.transform is not None:
+                            img = self.transform(img)
+                        seq_img.append(img)
                     seq_label.append([f['targets'][i][0], ])
-                    seq_img.append(img)
         else:
             with h5py.File(self.data_h5s[pos], 'r') as f:
-                for i in range(rel_pos, rel_pos + self.seq_len):
-                    img = f['rgb'][i]
-                    if self.transform is not None:
-                        img = self.transform(img)
-                    seq_label.append([f['targets'][i][0], ])
-                    seq_img.append(img)
+                for i in range(rel_pos, rel_pos + self.seq_len + 1):
+                    if i != rel_pos + self.seq_len:
+                        img = f['rgb'][i]
+                        if self.transform is not None:
+                            img = self.transform(img)
+                        seq_img.append(img)
+                    if i != rel_pos:
+                        seq_label.append([f['targets'][i][0], ])
         seq_imgs = torch.stack(seq_img, 0)
         seq_labels = torch.tensor(seq_label)
         return seq_imgs, seq_labels

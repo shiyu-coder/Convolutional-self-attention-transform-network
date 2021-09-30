@@ -201,7 +201,12 @@ class Exp_model:
 
                 batch_y = batch_y.float()
 
+                if self.args.single_learning:
+                    batch_y = batch_y[:, -1, 0]
+                    outputs = outputs[:, -1, 0]
+
                 loss = criterion(outputs, batch_y)
+
                 if self.use_gpu:
                     loss = loss.cpu()
 
@@ -252,6 +257,10 @@ class Exp_model:
             outputs = self.model(batch_x)
 
             batch_y = batch_y.float()
+
+            if self.args.single_learning:
+                batch_y = batch_y[:, -1, 0]
+                outputs = outputs[:, -1, 0]
 
             loss = criterion(outputs, batch_y)
 

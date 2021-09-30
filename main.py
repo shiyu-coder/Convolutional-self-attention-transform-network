@@ -12,6 +12,8 @@ parser.add_argument('--data', type=str, default='ADDataset',
 parser.add_argument('--data_path', type=str, default='DataSet', help='data file')
 parser.add_argument('--label_path', type=str, default='ADLabel.csv', help='label data file')
 parser.add_argument('--multitask', type=bool, default=False, help='multi task learning')
+parser.add_argument('--single_learning', type=bool, default=False,
+                    help='Only the last bit predicted by the model is optimized')
 
 parser.add_argument('--num_hiddens', type=int, default=128, help='the length of input of decoder')
 parser.add_argument('--num_heads', type=int, default=4, help='the num of heads of multi-head self-attention')
