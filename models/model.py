@@ -1,5 +1,6 @@
 import torch
 import math
+import numpy as np
 import torch.nn as nn
 from models.encoder import PCNNEncoder, SACNNEncoder, CNNEncoder, SingleEncoder, SALayer
 from models.decoder import Decoder
@@ -27,10 +28,12 @@ class CSATNet(nn.Module):
 
 class CSATNet_multitask(nn.Module):
     def __init__(self, num_hiddens=128, num_heads=4, seq_len=4, cnn_layer1_num=2, cnn_layer2_num=0, enc_layer_num=2,
-                 dec_layer_num=2, vector_num=32, label_size=1, drop_out=0.1, min_output_size=32, attention=False):
+                 dec_layer_num=2, vector_num=32, label_size=1, drop_out=0.1, min_output_size=32,
+                 attention=False, laplace=False):
         super(CSATNet_multitask, self).__init__()
         self.num_hiddens = num_hiddens
-        self.cnn = CNNLayer(num_hiddens, cnn_layer1_num, cnn_layer2_num)
+        self.norm = nn.BatchNorm2d(3)
+        self.cnn = CNNLayer(num_hiddens, cnn_layer1_num, cnn_layer2_num, laplace)
         self.pe = PositionalEncoding(num_hiddens, 0)
         self.enc = SingleEncoder(enc_layer_num, num_hiddens, num_heads, seq_len, drop_out, min_output_size)
 
@@ -58,6 +61,7 @@ class CSATNet_multitask(nn.Module):
     def forward(self, x):
         batch_num = x.shape[0]
         x = x.reshape(-1, x.shape[2], x.shape[3], x.shape[4])
+        x = self.norm(x)
         x = self.cnn(x)
         output1 = self.li(x)
         output1 = output1.reshape(batch_num, -1, output1.shape[1])
@@ -186,8 +190,18 @@ class CNN(nn.Module):
 
 if __name__ == '__main__':
     X = torch.rand(size=(8, 16, 3, 88, 200))
-    net = CSATNet_multitask(128, 4, 16, 2, 2, 3, 3, 1, 0.1, 32)
-    # net = SACNN(3, 2, 1)
-    X = net(X)
-    print(X.shape)
+    # net = CSATNet_multitask(128, 4, 16, 2, 2, 3, 3, 1, 0.1, 32)
+    # # net = SACNN(3, 2, 1)
+    # X = net(X)
+    # print(X.shape)
+    conv_op = nn.Conv2d(3, 3, 3, padding=1, bias=False)
+    sobel_kernel = np.array([[-1, -1, -1], [-1, 8, -1], [-1, -1, -1]], dtype='float32')
+    sobel_kernel = sobel_kernel.reshape((1, 1, 3, 3))
+    sobel_kernel = torch.from_numpy(sobel_kernel)
+    sobel_kernel = sobel_kernel.repeat(3, 3, 1, 1)
+    conv_op.weight.data = sobel_kernel
+    x = torch.rand(size=(12, 3, 88, 200))
+    y = conv_op(x)
+    print(y.shape)
+
 

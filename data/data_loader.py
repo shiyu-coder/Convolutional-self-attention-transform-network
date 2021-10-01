@@ -142,9 +142,9 @@ if __name__ == "__main__":
     train_transform = transforms.Compose([
         transforms.ToTensor(),
     ])
-    dataset = ADHDataset("../../test_dataset", 4, train_transform, mode='valid')
+    dataset = ADHDataset("../../test_dataset", 4, train_transform, mode='train')
     # dataset = ADDataset("../../DataSet", "../../ADLabel.csv", 4, transform=train_transform)
-    data_loader = DataLoader(dataset, batch_size=4, shuffle=True)
+    data_loader = DataLoader(dataset, batch_size=4, shuffle=True, num_workers=4)
     for i, (x, y) in enumerate(data_loader):
         print(i, x.shape, y.shape)
         # break

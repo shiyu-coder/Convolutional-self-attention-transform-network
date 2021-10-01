@@ -28,10 +28,11 @@ parser.add_argument('--label_size', type=int, default=1, help='the num of label 
 parser.add_argument('--drop_out', type=float, default=0.05, help='drop out probability')
 parser.add_argument('--min_output_size', type=int, default=32, help='the minimize size of output size of encoder')
 parser.add_argument('--attention', type=bool, default=False, help='use Parallel Self-attention Inception')
+parser.add_argument('--laplace', type=bool, default=False, help='Using Laplace operator')
 
 parser.add_argument('--itr', type=int, default=1, help='experiments times')
 parser.add_argument('--epoch', type=int, default=10, help='train epochs')
-parser.add_argument('--batch_size', type=int, default=4, help='batch size of train input data')
+parser.add_argument('--batch_size', type=int, default=6, help='batch size of train input data')
 parser.add_argument('--patience', type=int, default=3, help='early stopping patience')
 parser.add_argument('--learning_rate', type=float, default=0.0001, help='optimizer learning rate')
 parser.add_argument('--loss', type=str, default='mse', help='loss function')
@@ -49,10 +50,10 @@ print('Args in experiment:')
 print(args)
 
 for ii in range(args.itr):
-    setting = '{}-{}-nhi{}-nhe{}-sl{}-cl1n{}-cl2n{}-eln{}-dln{}-vn{}-is{}-ls{}-do{}-mos{}-a{}-{}'.format(
+    setting = '{}-{}-nhi{}-nhe{}-sl{}-cl1n{}-cl2n{}-eln{}-dln{}-vn{}-is{}-ls{}-do{}-mos{}-a{}-lap{}-{}'.format(
         args.model, args.data, args.num_hiddens, args.num_heads, args.seq_len, args.cnn_layer1_num, args.cnn_layer2_num,
         args.enc_layer_num, args.dec_layer_num, args.vector_num, args.input_size, args.label_size, args.drop_out, args.min_output_size,
-        args.attention, ii)
+        args.attention, args.laplace, ii)
 
     exp = Exp_model(args)
     print('>>>>>>>start training : {}>>>>>>>>>>>>>>>>>>>>>>>>>>'.format(setting))
