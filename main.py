@@ -18,7 +18,7 @@ parser.add_argument('--single_learning', type=bool, default=False,
 parser.add_argument('--num_hiddens', type=int, default=128, help='the length of input of decoder')
 parser.add_argument('--num_heads', type=int, default=4, help='the num of heads of multi-head self-attention')
 parser.add_argument('--seq_len', type=int, default=8, help='the length of history sequence')
-parser.add_argument('--cnn_layer1_num', type=int, default=2, help='the num of layer in the first part of CNN')
+parser.add_argument('--cnn_layer1_num', type=int, default=3, help='the num of layer in the first part of CNN')
 parser.add_argument('--cnn_layer2_num', type=int, default=2, help='the num of layer in the second part of CNN')
 parser.add_argument('--enc_layer_num', type=int, default=3, help='the num of self-attention layer in encoder')
 parser.add_argument('--dec_layer_num', type=int, default=3, help='the num of self-attention layer in decoder')

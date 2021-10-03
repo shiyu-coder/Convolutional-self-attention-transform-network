@@ -111,6 +111,7 @@ class ADHDataset(Dataset):
                     img = f['img'][i]
                     if self.transform is not None:
                         img = self.transform(img)
+                    img = img.permute(1, 2, 0)
                     if i != rel_pos:
                         seq_label.append([f['steer'][i], ])
                     seq_img.append(img)
@@ -120,6 +121,7 @@ class ADHDataset(Dataset):
                         img = f['img'][i]
                         if self.transform is not None:
                             img = self.transform(img)
+                        img = img.permute(1, 2, 0)
                         seq_img.append(img)
                     seq_label.append([f['steer'][i], ])
         else:
@@ -129,7 +131,7 @@ class ADHDataset(Dataset):
                         img = f['img'][i]
                         if self.transform is not None:
                             img = self.transform(img)
-                        # print(img.shape)
+                        img = img.permute(1, 2, 0)
                         seq_img.append(img)
                     if i != rel_pos:
                         seq_label.append([f['steer'][i], ])

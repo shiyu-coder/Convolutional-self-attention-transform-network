@@ -129,7 +129,7 @@ class CNNLayer(nn.Module):
         self.laplace = laplace
         if laplace:
             self.laplace = LaplaceConv(3, 3)
-            in_channels = [9, 24, 36, 48, 64, 80, 128, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256]
+            in_channels = [6, 24, 36, 48, 64, 80, 128, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256]
         else:
             in_channels = [3, 24, 36, 48, 64, 80, 128, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256]
         for i in range(0, cnn_layer1_num):

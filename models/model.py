@@ -62,7 +62,6 @@ class CSATNet_multitask(nn.Module):
 
     def forward(self, x):
         batch_num = x.shape[0]
-        print(x.shape)
         x = x.reshape(-1, x.shape[2], x.shape[3], x.shape[4])
         x = self.norm(x)
         x = self.cnn(x)
