@@ -84,8 +84,10 @@ class ADHDataset(Dataset):
         super(ADHDataset, self).__init__()
         if mode == "train":
             data_dir = os.path.join(data_dir, "SeqTrain")
-        else:
+        elif mode == 'valid':
             data_dir = os.path.join(data_dir, "SeqVal")
+        elif mode == 'test':
+            data_dir = os.path.join(data_dir, "SeqTest")
         self.data_h5s = self.get_data(data_dir)
         self.transform = transform
         self.seq_len = seq_len
@@ -106,30 +108,31 @@ class ADHDataset(Dataset):
         if rel_pos + self.seq_len + 1 > 200:
             with h5py.File(self.data_h5s[pos], 'r') as f:
                 for i in range(rel_pos, 200):
-                    img = f['rgb'][i]
+                    img = f['img'][i]
                     if self.transform is not None:
                         img = self.transform(img)
                     if i != rel_pos:
-                        seq_label.append([f['targets'][i][0], ])
+                        seq_label.append([f['steer'][i], ])
                     seq_img.append(img)
             with h5py.File(self.data_h5s[pos+1], 'r') as f:
                 for i in range(0, rel_pos + self.seq_len - 200 + 1):
                     if i != rel_pos + self.seq_len - 200:
-                        img = f['rgb'][i]
+                        img = f['img'][i]
                         if self.transform is not None:
                             img = self.transform(img)
                         seq_img.append(img)
-                    seq_label.append([f['targets'][i][0], ])
+                    seq_label.append([f['steer'][i], ])
         else:
             with h5py.File(self.data_h5s[pos], 'r') as f:
                 for i in range(rel_pos, rel_pos + self.seq_len + 1):
                     if i != rel_pos + self.seq_len:
-                        img = f['rgb'][i]
+                        img = f['img'][i]
                         if self.transform is not None:
                             img = self.transform(img)
+                        # print(img.shape)
                         seq_img.append(img)
                     if i != rel_pos:
-                        seq_label.append([f['targets'][i][0], ])
+                        seq_label.append([f['steer'][i], ])
         seq_imgs = torch.stack(seq_img, 0)
         seq_labels = torch.tensor(seq_label)
         return seq_imgs, seq_labels

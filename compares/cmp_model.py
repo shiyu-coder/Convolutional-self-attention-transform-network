@@ -12,7 +12,7 @@ class NVIDIA_ORIGIN(nn.Module):
         self.conv4 = nn.Conv2d(in_channels=48, out_channels=64, kernel_size=(3, 3), stride=(1, 1))
         self.conv5 = nn.Conv2d(in_channels=64, out_channels=64, kernel_size=(3, 3), stride=(1, 1))
         self.flat = nn.Flatten()
-        self.fc1 = nn.Linear(4608, 100)
+        self.fc1 = nn.Linear(31680, 100)
         self.fc2 = nn.Linear(100, 50)
         self.fc3 = nn.Linear(50, 10)
         self.fc4 = nn.Linear(10, 1)
@@ -44,7 +44,7 @@ class NVIDIA_ORIGIN(nn.Module):
 
 
 if __name__ == '__main__':
-    X = torch.rand(size=(8, 1, 3, 88, 200))
+    X = torch.rand(size=(8, 1, 3, 180, 320))
     net = NVIDIA_ORIGIN()
     X = net(X)
     print(X.shape)
