@@ -25,14 +25,14 @@ imgs = []
 steers = []
 
 
-
 def save_h5(imgs, steers):
-    index = "%04d" % (count // 200)
+    index = "%04d" % (count // 400)
     root_dir = '../../town01/SeqTrain'
     path = os.path.join(root_dir, index + '.h5')
     print("saving " + path)
     f = h5py.File(path, 'w')  # 创建一个h5文件，文件指针是f
     f['img'] = imgs  # 将数据写入文件的主键data下面
+    # print(len(imgs))
     f['steer'] = steers  # 将数据写入文件的主键labels下面
     f.close()
 
@@ -47,15 +47,15 @@ def process_img(image):
     cv2.waitKey(10)
     i3 = i3.transpose(2, 0, 1)
     control = vehicle.get_control()
-    if vehicle.is_at_traffic_light():
+    if not vehicle.is_at_traffic_light():
         if (count + 1) % 2 == 0:
             imgs.append(i3)
             steers.append(float(control.steer))
-            count += 1
-        if (count + 1) % 200 == 0:
+        if (count + 1) % 400 == 0:
             save_h5(imgs, steers)
             imgs = []
             steers = []
+        count += 1
     return i3
 
 
@@ -65,7 +65,7 @@ try:
     client = carla.Client('localhost', 2000)
     client.set_timeout(10)
     # world connection
-    world = client.load_world('Town04')
+    world = client.load_world('Town01')
     world.set_weather(carla.WeatherParameters.ClearNoon)
     # get blueprint libarary
     blueprint_library = world.get_blueprint_library()
