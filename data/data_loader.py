@@ -1,6 +1,7 @@
 import torch
 import torchvision.transforms as transforms
 import os
+import cv2
 from torch.utils.data import DataLoader
 import numpy as np
 import pandas as pd
@@ -149,7 +150,13 @@ if __name__ == "__main__":
     ])
     dataset = ADHDataset("../../test_dataset", 4, train_transform, mode='train')
     # dataset = ADDataset("../../DataSet", "../../ADLabel.csv", 4, transform=train_transform)
-    data_loader = DataLoader(dataset, batch_size=4, shuffle=True, num_workers=4)
+    data_loader = DataLoader(dataset, batch_size=4, shuffle=False, num_workers=4)
+    import time
     for i, (x, y) in enumerate(data_loader):
         print(i, x.shape, y.shape)
+        x = x[0][0]
+        x = x.permute(1, 2, 0)
+        cv2.imshow("dd", x.detach().numpy())
+        cv2.waitKey(10)
+        time.sleep(1)
         # break

@@ -26,8 +26,9 @@ steers = []
 
 
 def save_h5(imgs, steers):
-    index = "%04d" % (count // 400)
+    index = "%04d" % (count // 200)
     root_dir = '../../town01/SeqTrain'
+    # root_dir = '../../town01H/SeqTrain'
     path = os.path.join(root_dir, index + '.h5')
     print("saving " + path)
     f = h5py.File(path, 'w')  # 创建一个h5文件，文件指针是f
@@ -48,10 +49,9 @@ def process_img(image):
     i3 = i3.transpose(2, 0, 1)
     control = vehicle.get_control()
     if not vehicle.is_at_traffic_light():
-        if (count + 1) % 2 == 0:
-            imgs.append(i3)
-            steers.append(float(control.steer))
-        if (count + 1) % 400 == 0:
+        imgs.append(i3)
+        steers.append(float(control.steer))
+        if (count + 1) % 200 == 0:
             save_h5(imgs, steers)
             imgs = []
             steers = []

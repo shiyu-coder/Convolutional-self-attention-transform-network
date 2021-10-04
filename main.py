@@ -22,7 +22,7 @@ parser.add_argument('--cnn_layer1_num', type=int, default=3, help='the num of la
 parser.add_argument('--cnn_layer2_num', type=int, default=2, help='the num of layer in the second part of CNN')
 parser.add_argument('--enc_layer_num', type=int, default=3, help='the num of self-attention layer in encoder')
 parser.add_argument('--dec_layer_num', type=int, default=3, help='the num of self-attention layer in decoder')
-parser.add_argument('--vector_num', type=int, default=3, help='eigenvector length of convolution and timing output')
+parser.add_argument('--vector_num', type=int, default=32, help='eigenvector length of convolution and timing output')
 parser.add_argument('--input_size', type=tuple, default=(180, 320), help='input size(image size)')
 parser.add_argument('--label_size', type=int, default=1, help='the num of label for one piece of input')
 parser.add_argument('--drop_out', type=float, default=0.05, help='drop out probability')

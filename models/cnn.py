@@ -121,7 +121,7 @@ class ChannelParallelismCNN(nn.Module):
 
 
 class CNNLayer(nn.Module):
-    def __init__(self, num_hiddens=128, cnn_layer1_num=2, cnn_layer2_num=2, laplace=False):
+    def __init__(self, num_hiddens=128, cnn_layer1_num=3, cnn_layer2_num=2, laplace=False):
         super(CNNLayer, self).__init__()
         self.cnn = nn.Sequential()
         # in_channels = [3, 24, 36, 48, 64, 80, 128, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256]
@@ -135,7 +135,7 @@ class CNNLayer(nn.Module):
         for i in range(0, cnn_layer1_num):
             self.cnn.add_module("layer1-"+str(i), nn.Conv2d(in_channels[i], in_channels[i+1], kernel_size=5, stride=2))
             self.cnn.add_module("actFun-" + str(i), nn.ELU())
-        self.cnn.add_module("pool1", nn.MaxPool2d(kernel_size=3, stride=2, padding=1))
+        self.cnn.add_module("pool1", nn.MaxPool2d(kernel_size=3, stride=1, padding=1))
         for i in range(cnn_layer1_num, cnn_layer1_num + cnn_layer2_num):
             self.cnn.add_module("layer2-" + str(i), nn.Conv2d(in_channels[i], in_channels[i+1], kernel_size=3))
             self.cnn.add_module("actFun-" + str(i), nn.ELU())
@@ -143,7 +143,7 @@ class CNNLayer(nn.Module):
         in_channel = in_channels[cnn_layer1_num + cnn_layer2_num]
         self.dense = nn.Sequential(
             nn.Flatten(),
-            nn.Linear(in_channel * 24, 256),
+            nn.Linear(in_channel * 136, 256),
             nn.ELU(),
             nn.Linear(256, num_hiddens),
         )
