@@ -18,17 +18,28 @@ class SelfAttentionConv(nn.Module):
         return x
 
 
-class LaplaceConv(nn.Module):
+class BlurPool(nn.Module):
 
     def __init__(self, c_in, c_out):
-        super(LaplaceConv, self).__init__()
+        super(BlurPool, self).__init__()
+        self.conv_op = nn.Conv2d(c_in, c_out, 3, stride=2, bias=False)
+        kernel = np.array([[1., 2., 1.], [2., 4., 2.], [1., 2., 1.]], dtype='float32')
+        kernel = kernel.reshape((1, 1, 3, 3))
+        kernel = torch.from_numpy(kernel)
+        kernel = kernel / torch.sum(kernel)
+        kernel = kernel.repeat(c_in, c_out, 1, 1)
+        self.conv_op.weight.data = kernel
+        self.conv_op.weight.requires_grad = False
+
+    def forward(self, x):
+        return self.conv_op(x)
+
+
+class ChannelExpansionConv(nn.Module):
+
+    def __init__(self, c_in, c_out):
+        super(ChannelExpansionConv, self).__init__()
         self.conv_op = nn.Conv2d(c_in, c_out, 3, padding=1, bias=False)
-        sobel_kernel = np.array([[-1, -1, -1], [-1, 8, -1], [-1, -1, -1]], dtype='float32')
-        sobel_kernel = sobel_kernel.reshape((1, 1, 3, 3))
-        sobel_kernel = torch.from_numpy(sobel_kernel)
-        sobel_kernel = sobel_kernel.repeat(c_in, c_out, 1, 1)
-        # self.conv_op.weight.data = sobel_kernel
-        # self.conv_op.weight.requires_grad = False
 
     def forward(self, x):
         return self.conv_op(x)
@@ -120,15 +131,57 @@ class ChannelParallelismCNN(nn.Module):
         return x
 
 
-class CNNLayer(nn.Module):
+class BlurCNNLayer(nn.Module):
     def __init__(self, num_hiddens=128, cnn_layer1_num=3, cnn_layer2_num=2, laplace=False):
-        super(CNNLayer, self).__init__()
+        super(BlurCNNLayer, self).__init__()
         self.cnn = nn.Sequential()
         # in_channels = [3, 24, 36, 48, 64, 80, 128, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256]
         # in_channels = [1, 24, 36, 48, 64, 80, 128, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256]
         self.laplace = laplace
         if laplace:
-            self.laplace = LaplaceConv(3, 3)
+            self.laplace = ChannelExpansionConv(3, 3)
+            in_channels = [6, 24, 36, 48, 64, 80, 128, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256]
+        else:
+            in_channels = [3, 24, 36, 48, 64, 80, 128, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256]
+        for i in range(0, cnn_layer1_num):
+            self.cnn.add_module("layer1-"+str(i), nn.Conv2d(in_channels[i], in_channels[i+1], kernel_size=3))
+            self.cnn.add_module("actFun-" + str(i), nn.ELU())
+            self.cnn.add_module("blurPool1-" + str(i), BlurPool(in_channels[i+1], in_channels[i+1]))
+        # self.cnn.add_module("pool1", nn.MaxPool2d(kernel_size=3, stride=1, padding=1))
+        # self.cnn.add_module("blurpool1", BlurPool(in_channels[cnn_layer1_num], in_channels[cnn_layer1_num]))
+        for i in range(cnn_layer1_num, cnn_layer1_num + cnn_layer2_num):
+            self.cnn.add_module("layer2-" + str(i), nn.Conv2d(in_channels[i], in_channels[i+1], kernel_size=3))
+            self.cnn.add_module("actFun-" + str(i), nn.ELU())
+            self.cnn.add_module("blurPool2-" + str(i), BlurPool(in_channels[i + 1], in_channels[i + 1]))
+        # self.cnn.add_module("pool2", nn.MaxPool2d(kernel_size=3, stride=1, padding=1))
+        # self.cnn.add_module("blurpool2", BlurPool(in_channels[cnn_layer1_num + cnn_layer2_num],
+        #                                           in_channels[cnn_layer1_num + cnn_layer2_num]))
+        in_channel = in_channels[cnn_layer1_num + cnn_layer2_num]
+        self.dense = nn.Sequential(
+            nn.Flatten(),
+            nn.Linear(in_channel * 14, 256),
+            nn.ELU(),
+            nn.Linear(256, num_hiddens),
+        )
+
+    def forward(self, x):
+        if self.laplace:
+            lap = self.laplace(x)
+            x = torch.cat((x, lap), dim=1)
+        x = self.cnn(x)
+        x = self.dense(x)
+        return x
+
+
+class CNNLayer(nn.Module):
+    def __init__(self, num_hiddens=128, cnn_layer1_num=3, cnn_layer2_num=2, channel_expansion=False):
+        super(CNNLayer, self).__init__()
+        self.cnn = nn.Sequential()
+        # in_channels = [3, 24, 36, 48, 64, 80, 128, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256]
+        # in_channels = [1, 24, 36, 48, 64, 80, 128, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256]
+        self.channel_expansion = channel_expansion
+        if channel_expansion:
+            self.channel_expansion = ChannelExpansionConv(3, 3)
             in_channels = [6, 24, 36, 48, 64, 80, 128, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256]
         else:
             in_channels = [3, 24, 36, 48, 64, 80, 128, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256]
@@ -149,23 +202,23 @@ class CNNLayer(nn.Module):
         )
 
     def forward(self, x):
-        if self.laplace:
-            lap = self.laplace(x)
-            x = torch.cat((x, lap), dim=1)
+        if self.channel_expansion:
+            ce = self.channel_expansion(x)
+            x = torch.cat((x, ce), dim=1)
         x = self.cnn(x)
         x = self.dense(x)
         return x
 
 
 class FastCNNLayer(nn.Module):
-    def __init__(self, num_hiddens=128, cnn_layer1_num=3, cnn_layer2_num=2, laplace=False):
+    def __init__(self, num_hiddens=128, cnn_layer1_num=3, cnn_layer2_num=2, channel_expansion=False):
         super(FastCNNLayer, self).__init__()
         self.cnn = nn.Sequential()
         # in_channels = [3, 24, 36, 48, 64, 80, 128, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256]
         # in_channels = [1, 24, 36, 48, 64, 80, 128, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256]
-        self.laplace = laplace
-        if laplace:
-            self.laplace = LaplaceConv(3, 3)
+        self.channel_expansion = channel_expansion
+        if channel_expansion:
+            self.channel_expansion = ChannelExpansionConv(3, 3)
             in_channels = [6, 24, 36, 48, 64, 80, 128, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256]
         else:
             in_channels = [3, 24, 36, 48, 64, 80, 128, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256]
@@ -194,9 +247,9 @@ class FastCNNLayer(nn.Module):
         )
 
     def forward(self, x):
-        if self.laplace:
-            lap = self.laplace(x)
-            x = torch.cat((x, lap), dim=1)
+        if self.channel_expansion:
+            ce = self.channel_expansion(x)
+            x = torch.cat((x, ce), dim=1)
         x = self.cnn(x)
         x = self.dense(x)
         return x
@@ -322,8 +375,12 @@ if __name__ == "__main__":
     # X = net.b3(X)
     # print(X.shape)
     X = torch.rand(size=(8, 3, 88, 200))
-    net = ChannelParallelismCNN(128, 2, 2)
+    net = BlurCNNLayer()
     X = net(X)
     print(X.shape)
+    a = np.array([1., 2., 1.])
+    filt = torch.Tensor(a[:, None] * a[None, :])
+    print(filt.shape)
+    print(filt)
 
 

@@ -1,6 +1,6 @@
 from data.data_loader import ADDataset, ADHDataset
 from compares.cmp_model import NVIDIA_ORIGIN
-from models.model import CSATNet, PSACNN, SACNN, FSACNN, CNN, CSATNet_multitask
+from models.model import CSATNet, PSACNN, SACNN, FSACNN, CNN, CSATNet_v2
 import torch
 import torch.nn as nn
 from torch import optim
@@ -31,7 +31,7 @@ class Exp_model:
     def _build_model(self):
         model_dict = {
             'CSATNet': CSATNet,
-            'CSATNet_multitask': CSATNet_multitask,
+            'CSATNet_multitask': CSATNet_v2,
             'NVIDIA_ORIGIN': NVIDIA_ORIGIN,
             'PSACNN': PSACNN,
             'SACNN': SACNN,
@@ -65,7 +65,7 @@ class Exp_model:
                 self.args.drop_out,
                 self.args.min_output_size,
                 self.args.attention,
-                self.args.laplace,
+                self.args.channel_expansion,
             )
         elif self.args.model == 'PSACNN':
             model = model_dict[self.args.model](

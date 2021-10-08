@@ -4,13 +4,13 @@ import numpy as np
 import torch.nn as nn
 from models.encoder import PCNNEncoder, SACNNEncoder, CNNEncoder, SingleEncoder, SALayer
 from models.decoder import Decoder
-from models.cnn import PCNN, SelfAttentionConv, CNNLayer, ChannelParallelismCNN, FastCNNLayer
+from models.cnn import PCNN, SelfAttentionConv, CNNLayer, ChannelParallelismCNN, FastCNNLayer, BlurCNNLayer
 from utils.positionalEncoding import PositionalEncoding
 
 
 class CSATNet(nn.Module):
-    def __init__(self, num_hiddens=128, num_heads=4, seq_len=4, cnn_layer1_num=2, cnn_layer2_num=0,
-                 enc_layer_num=2, dec_layer_num=2, label_size=1, drop_out=0.1, min_output_size=32):
+    def __init__(self, num_hiddens=128, num_heads=4, seq_len=4, cnn_layer1_num=3, cnn_layer2_num=2,
+                 enc_layer_num=3, dec_layer_num=3, label_size=1, drop_out=0.1, min_output_size=32):
         super(CSATNet, self).__init__()
         self.enc = CNNEncoder(num_hiddens, num_heads, seq_len, cnn_layer1_num,
                               cnn_layer2_num, enc_layer_num, drop_out, min_output_size)
@@ -26,14 +26,15 @@ class CSATNet(nn.Module):
         return output
 
 
-class CSATNet_multitask(nn.Module):
+class CSATNet_v2(nn.Module):
     def __init__(self, num_hiddens=128, num_heads=4, seq_len=8, cnn_layer1_num=3, cnn_layer2_num=2, enc_layer_num=3,
                  dec_layer_num=3, vector_num=32, label_size=1, drop_out=0.1, min_output_size=32,
-                 attention=False, laplace=False):
-        super(CSATNet_multitask, self).__init__()
+                 attention=False, channel_expansion=True):
+        super(CSATNet_v2, self).__init__()
         self.num_hiddens = num_hiddens
         self.norm = nn.BatchNorm2d(3)
-        self.cnn = CNNLayer(num_hiddens, cnn_layer1_num, cnn_layer2_num, laplace)
+        self.cnn = CNNLayer(num_hiddens, cnn_layer1_num, cnn_layer2_num, channel_expansion)
+        # self.cnn = BlurCNNLayer(num_hiddens, cnn_layer1_num, cnn_layer2_num, laplace)
         # self.cnn = FastCNNLayer(num_hiddens, cnn_layer1_num, cnn_layer2_num, laplace)
         # self.cnn = ChannelParallelismCNN(num_hiddens, cnn_layer1_num, cnn_layer2_num)
         self.pe = PositionalEncoding(num_hiddens, 0)
@@ -191,9 +192,9 @@ class CNN(nn.Module):
 
 
 if __name__ == '__main__':
-    X = torch.rand(size=(8, 8, 3, 180, 320))
-    net = CSATNet_multitask()
-    # # net = SACNN(3, 2, 1)
+    X = torch.rand(size=(8, 4, 3, 180, 320))
+    # net = CSATNet_v2()
+    net = CSATNet()
     X = net(X)
     print(X.shape)
     # conv_op = nn.Conv2d(3, 3, 3, padding=1, bias=False)
