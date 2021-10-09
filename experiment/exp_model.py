@@ -2,6 +2,7 @@ from data.data_loader import ADDataset, ADHDataset
 from compares.cmp_model import NVIDIA_ORIGIN
 from models.model import CSATNet, PSACNN, SACNN, FSACNN, CNN, CSATNet_v2
 import torch
+import models.lossFun as lossFun
 import torch.nn as nn
 from torch import optim
 from torch.utils.data import DataLoader
@@ -37,6 +38,7 @@ class Exp_model:
             'SACNN': SACNN,
             'FSACNN': FSACNN,
             'CNN': CNN,
+            'CSATNet_v2': CSATNet_v2,
         }
         if self.args.model == 'CSATNet':
             model = model_dict[self.args.model](
@@ -51,7 +53,7 @@ class Exp_model:
                 self.args.drop_out,
                 self.args.min_output_size,
             )
-        if self.args.model == 'CSATNet_multitask':
+        if self.args.model == 'CSATNet_v2':
             model = model_dict[self.args.model](
                 self.args.num_hiddens,
                 self.args.num_heads,
@@ -163,7 +165,16 @@ class Exp_model:
         return model_optim
 
     def _select_criterion(self):
-        criterion = nn.MSELoss()
+        if self.args.loss == 'mae':
+            criterion = nn.L1Loss()
+        elif self.args.loss == 'mse':
+            criterion = nn.MSELoss()
+        elif self.args.loss == 'smoothL1':
+            criterion = nn.SmoothL1Loss()
+        elif self.args.loss == 'steeringLoss':
+            criterion = lossFun.SteeringLoss(1, 1, 1)
+        elif self.args.loss == 'unbalancedLoss':
+            criterion = lossFun.UnbalancedLoss(1.6, 1.6)
         if self.use_gpu:
             criterion = criterion.cuda()
         return criterion
@@ -236,6 +247,7 @@ class Exp_model:
 
             print("Epoch: {0}, Steps: {1} | Train Loss: {2:.7f} Vali Loss: {3:.7f}".format(
                 epoch + 1, train_steps, train_loss, vali_loss))
+
             early_stopping(vali_loss, self.model, path)
             if early_stopping.early_stop:
                 print("Early stopping")

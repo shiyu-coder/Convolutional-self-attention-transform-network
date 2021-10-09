@@ -41,6 +41,7 @@ class CSATNet_v2(nn.Module):
         self.enc = SingleEncoder(enc_layer_num, num_hiddens, num_heads, seq_len, drop_out, min_output_size)
 
         self.li = nn.Sequential(
+            nn.ELU(),
             nn.Linear(num_hiddens, (num_hiddens + vector_num)//2),
             nn.ELU(),
             nn.Linear((num_hiddens + vector_num)//2, vector_num)
