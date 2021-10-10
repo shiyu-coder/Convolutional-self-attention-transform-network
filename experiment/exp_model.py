@@ -174,7 +174,7 @@ class Exp_model:
         elif self.args.loss == 'steeringLoss':
             criterion = lossFun.SteeringLoss(1, 1, 1)
         elif self.args.loss == 'unbalancedLoss':
-            criterion = lossFun.UnbalancedLoss(1, 1)
+            criterion = lossFun.UnbalancedLoss(self.args.loss_arg[0], self.args.loss_arg[1])
         if self.use_gpu:
             criterion = criterion.cuda()
         return criterion

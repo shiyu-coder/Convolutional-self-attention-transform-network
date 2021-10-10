@@ -37,6 +37,7 @@ parser.add_argument('--patience', type=int, default=3, help='early stopping pati
 parser.add_argument('--learning_rate', type=float, default=0.0004, help='optimizer learning rate')
 parser.add_argument('--loss', type=str, default='unbalancedLoss',
                     help='loss function. options: [mse, mae, smoothL1, steeringLoss, unbalancedLoss]')
+parser.add_argument('--loss_arg', type=tuple, default=(1, 1), help='Loss function parameters')
 parser.add_argument('--lr_adj', type=str, default='type1', help='adjust learning rate')
 parser.add_argument('--use_gpu', type=bool, default=True, help='use gpu')
 parser.add_argument('--gpu', type=int, default=0, help='gpu')
@@ -51,8 +52,8 @@ print('Args in experiment:')
 print(args)
 
 for ii in range(args.itr):
-    setting = '{}-{}-{}-nhi{}-nhe{}-sl{}-cl1n{}-cl2n{}-eln{}-dln{}-vn{}-is{}-ls{}-do{}-mos{}-a{}-ce{}-{}'.format(
-        args.model, args.data, args.loss, args.num_hiddens, args.num_heads, args.seq_len, args.cnn_layer1_num, args.cnn_layer2_num,
+    setting = '{}-{}-{}_{}_{}-nhi{}-nhe{}-sl{}-cl1n{}-cl2n{}-eln{}-dln{}-vn{}-is{}-ls{}-do{}-mos{}-a{}-ce{}-{}'.format(
+        args.model, args.data, args.loss, args.loss_arg[0], args.loss_arg[1], args.num_hiddens, args.num_heads, args.seq_len, args.cnn_layer1_num, args.cnn_layer2_num,
         args.enc_layer_num, args.dec_layer_num, args.vector_num, args.input_size, args.label_size, args.drop_out, args.min_output_size,
         args.attention, args.channel_expansion, ii)
 
