@@ -55,11 +55,17 @@ model2 = CSATNet_v2(128, 4, seq_len, 3, 2, 3, 3, 32, 1, 0.05, 32, False, True)
 model2.load_state_dict(torch.load('../checkpoints/CSATNet_v2-ADHDataset-mse-nhi128-nhe4-sl6-cl1n3-cl2n2-eln3-dln3-vn32-is(180, 320)-ls1-do0.05-mos32-aFalse-ceTrue-0/checkpoint.pth'))
 
 
-preds1, trues = get_steer_curve(model1, data_loader)
-preds2, _ = get_steer_curve(model1, data_loader)
+model3 = CSATNet_v2(128, 4, seq_len, 3, 2, 3, 3, 32, 1, 0.05, 32, False, True)
+model3.load_state_dict(torch.load('../checkpoints/CSATNet_v2-ADHDataset-steeringLoss-nhi128-nhe4-sl6-cl1n3-cl2n2-eln3-dln3-vn32-is(180, 320)-ls1-do0.05-mos32-aFalse-ceTrue-0/checkpoint.pth'))
 
-plt.plot(preds1, label='unbalanced loss')
+
+preds1, trues = get_steer_curve(model1, data_loader)
+preds2, _ = get_steer_curve(model2, data_loader)
+preds3, _ = get_steer_curve(model3, data_loader)
+
 plt.plot(preds2, label='mse')
+plt.plot(preds3, label='steerling loss')
+plt.plot(preds1, label='unbalanced loss')
 plt.plot(trues, label='label')
 plt.legend()
 plt.show()

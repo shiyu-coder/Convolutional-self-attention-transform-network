@@ -174,7 +174,7 @@ class Exp_model:
         elif self.args.loss == 'steeringLoss':
             criterion = lossFun.SteeringLoss(1, 1, 1)
         elif self.args.loss == 'unbalancedLoss':
-            criterion = lossFun.UnbalancedLoss(1.6, 1.6)
+            criterion = lossFun.UnbalancedLoss(1, 1)
         if self.use_gpu:
             criterion = criterion.cuda()
         return criterion
@@ -248,10 +248,11 @@ class Exp_model:
             print("Epoch: {0}, Steps: {1} | Train Loss: {2:.7f} Vali Loss: {3:.7f}".format(
                 epoch + 1, train_steps, train_loss, vali_loss))
 
-            early_stopping(vali_loss, self.model, path)
-            if early_stopping.early_stop:
-                print("Early stopping")
-                break
+            if epoch > 4:
+                early_stopping(vali_loss, self.model, path)
+                if early_stopping.early_stop:
+                    print("Early stopping")
+                    break
 
             adjust_learning_rate(model_optim, epoch + 1, self.args)
 

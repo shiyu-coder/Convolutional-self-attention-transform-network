@@ -13,7 +13,7 @@ for r in np.arange(1, 2, 0.1):
     plt.plot(res)
 plt.subplot(122)
 for a in np.arange(0, 2, 0.2):
-    res = [np.exp((1+a*np.abs(y[i]))**1.6-1) for i in range(len(y))]
+    res = [np.exp((1+a*np.abs(y[i]))**1.2-1) for i in range(len(y))]
     plt.plot(res)
-# 1.6, 1.6
+# 1, 1
 plt.show()
