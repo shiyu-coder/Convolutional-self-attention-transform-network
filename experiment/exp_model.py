@@ -1,5 +1,5 @@
 from data.data_loader import ADDataset, ADHDataset
-from compares.cmp_model import NVIDIA_ORIGIN
+from compares.cmp_model import NVIDIA_ORIGIN, CNN_LSTM, TDCNN_LSTM
 from models.model import CSATNet, PSACNN, SACNN, FSACNN, CNN, CSATNet_v2
 import torch
 import models.lossFun as lossFun
@@ -39,6 +39,8 @@ class Exp_model:
             'FSACNN': FSACNN,
             'CNN': CNN,
             'CSATNet_v2': CSATNet_v2,
+            'CNN_LSTM': CNN_LSTM,
+            'TDCNN_LSTM': TDCNN_LSTM,
         }
         if self.args.model == 'CSATNet':
             model = model_dict[self.args.model](
@@ -96,7 +98,7 @@ class Exp_model:
                 self.args.cnn_layer2_num,
                 self.args.label_size,
             )
-        elif self.args.model == 'NVIDIA_ORIGIN':
+        elif self.args.model == 'NVIDIA_ORIGIN' or self.args.model == 'CNN_LSTM' or self.args.model == 'TDCNN_LSTM':
             model = model_dict[self.args.model]()
 
         return model.float()
@@ -164,7 +166,10 @@ class Exp_model:
         model_optim = optim.Adam(self.model.parameters(), lr=self.args.learning_rate)
         return model_optim
 
-    def _select_criterion(self):
+    def _select_criterion(self, valid=False):
+        if valid:
+            criterion = nn.MSELoss()
+            return criterion
         if self.args.loss == 'mae':
             criterion = nn.L1Loss()
         elif self.args.loss == 'mse':
@@ -194,6 +199,7 @@ class Exp_model:
 
         model_optim = self._select_optimizer()
         criterion = self._select_criterion()
+        vali_criterion = self._select_criterion(valid=True)
         total_count = 0
         for epoch in range(self.args.epoch):
             iter_count = 0
@@ -216,6 +222,9 @@ class Exp_model:
                 if self.args.single_learning:
                     batch_y = batch_y[:, -1, 0]
                     outputs = outputs[:, -1, 0]
+
+                if outputs.shape[1] < batch_y.shape[1]:
+                    batch_y = batch_y[:, -outputs.shape[1]:, :]
 
                 loss = criterion(outputs, batch_y)
 
@@ -240,7 +249,7 @@ class Exp_model:
 
             train_loss = np.average(train_loss)
 
-            vali_loss = self.vali(vali_loader, criterion)
+            vali_loss = self.vali(vali_loader, vali_criterion)
 
             if self.args.tensorboard:
                 self.writer.add_scalar("Valid loss", vali_loss, global_step=epoch)
@@ -248,11 +257,15 @@ class Exp_model:
             print("Epoch: {0}, Steps: {1} | Train Loss: {2:.7f} Vali Loss: {3:.7f}".format(
                 epoch + 1, train_steps, train_loss, vali_loss))
 
-            if epoch > 4:
-                early_stopping(vali_loss, self.model, path)
-                if early_stopping.early_stop:
-                    print("Early stopping")
-                    break
+            # if epoch > 4:
+            #     early_stopping(vali_loss, self.model, path)
+            #     if early_stopping.early_stop:
+            #         print("Early stopping")
+            #         break
+            early_stopping(vali_loss, self.model, path)
+            if early_stopping.early_stop:
+                print("Early stopping")
+                break
 
             adjust_learning_rate(model_optim, epoch + 1, self.args)
 
@@ -275,6 +288,9 @@ class Exp_model:
             if self.args.single_learning:
                 batch_y = batch_y[:, -1, 0]
                 outputs = outputs[:, -1, 0]
+
+            if outputs.shape[1] < batch_y.shape[1]:
+                batch_y = batch_y[:, -outputs.shape[1]:, :]
 
             loss = criterion(outputs, batch_y)
 

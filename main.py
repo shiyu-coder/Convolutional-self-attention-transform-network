@@ -6,7 +6,7 @@ from experiment.exp_model import Exp_model
 parser = argparse.ArgumentParser(description='CSATNet: Convolutional Self-attention Transform Network')
 
 parser.add_argument('--model', type=str, default='CSATNet_v2',
-                    help='model for experiment, options: [CSATNet, CSATNet_v2, SACNN, FSACNN, PSACNN, CNN, NVIDIA_ORIGIN]')
+                    help='model for experiment, options: [CSATNet, CSATNet_v2, NVIDIA_ORIGIN, CNN_LSTM, TDCNN_LSTM]')
 parser.add_argument('--data', type=str, default='ADHDataset',
                     help='dataset for experiment, options: [ADDataset, ADHDataset]')
 parser.add_argument('--data_path', type=str, default='../test_dataset', help='data file')
@@ -17,7 +17,7 @@ parser.add_argument('--single_learning', type=bool, default=False,
 
 parser.add_argument('--num_hiddens', type=int, default=128, help='the length of input of decoder')
 parser.add_argument('--num_heads', type=int, default=4, help='the num of heads of multi-head self-attention')
-parser.add_argument('--seq_len', type=int, default=6, help='the length of history sequence')
+parser.add_argument('--seq_len', type=int, default=5, help='the length of history sequence')
 parser.add_argument('--cnn_layer1_num', type=int, default=3, help='the num of layer in the first part of CNN')
 parser.add_argument('--cnn_layer2_num', type=int, default=2, help='the num of layer in the second part of CNN')
 parser.add_argument('--enc_layer_num', type=int, default=3, help='the num of self-attention layer in encoder')
@@ -32,7 +32,7 @@ parser.add_argument('--channel_expansion', type=bool, default=True, help='Input 
 
 parser.add_argument('--itr', type=int, default=1, help='experiments times')
 parser.add_argument('--epoch', type=int, default=10, help='train epochs')
-parser.add_argument('--batch_size', type=int, default=6, help='batch size of train input data')
+parser.add_argument('--batch_size', type=int, default=25, help='batch size of train input data')
 parser.add_argument('--patience', type=int, default=3, help='early stopping patience')
 parser.add_argument('--learning_rate', type=float, default=0.0004, help='optimizer learning rate')
 parser.add_argument('--loss', type=str, default='unbalancedLoss',
