@@ -4,9 +4,13 @@ import numpy as np
 import math
 import h5py
 import cv2
+import matplotlib.pyplot as plt
+
 
 def cut66_200(image):
     return image[0:200][11:77]
+
+
 def getfilenamelist(path):
     FNlist = []
     for root, dirs, files in os.walk(path):
@@ -14,6 +18,8 @@ def getfilenamelist(path):
             FNlist.append(os.path.join(root, f))
     FNlist.sort()
     return FNlist
+
+
 def BrightnessHistogramEqualization(originimage):
     imageYUV = cv2.cvtColor(originimage, cv2.COLOR_BGR2YCrCb)
     channelsYUV = cv2.split(imageYUV)
@@ -21,24 +27,33 @@ def BrightnessHistogramEqualization(originimage):
     imageYUV = cv2.merge(channelsYUV)
     resultimage = cv2.cvtColor(imageYUV, cv2.COLOR_YCrCb2BGR)
     return resultimage
+
+
 def BHE(originimage):
     return BrightnessHistogramEqualization(originimage)
+
+
 def ImageNormalization(image):
-    if (np.max(image) - np.min(image) == 0):
+    if np.max(image) - np.min(image) == 0:
         plt.title('Image 1')
         plt.imshow(image)
         plt.show()
     assert (np.max(image) - np.min(image) != 0)
     image = (image - np.min(image)) / (np.max(image) - np.min(image))
     return image
+
+
 def IN(image):
     return ImageNormalization(image)
+
 
 class MyDataset(torch.utils.data.Dataset):
     def __init__(self, filenamelist):
         self.filenamelist = filenamelist
+
     def __len__(self):
         return int(len(self.filenamelist)*200)
+
     def __getitem__(self,idx):
         file_idx = math.floor(idx / 200)
         infile_idx = math.floor(idx % 200)

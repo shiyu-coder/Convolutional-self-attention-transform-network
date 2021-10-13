@@ -41,7 +41,7 @@ mynet.load_state_dict(torch.load('../checkpoints/CSATNet_multitask-ADHDataset-nh
 # mynet = NVIDIA_ORIGIN()
 # mynet.load_state_dict(torch.load('../checkpoints/NVIDIA_ORIGIN-ADHDataset-nhi128-nhe4-sl1-cl1n3-cl2n2-eln3-dln3-vn32-is(180, 320)-ls1-do0.05-mos32-aFalse-lapTrue-0/checkpoint.pth'))
 seq_len = 5
-
+mynet.eval()
 if use_gpu:
     mynet = mynet.cuda()
 # mynet = torch.load("model/Train_4_NVIDIA_ORIGIN/Epoch8_Val_loss0.00981.pkl")    # the best util now

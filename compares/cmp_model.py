@@ -67,7 +67,7 @@ class CNN_LSTM(nn.Module):
             nn.ReLU(),
             nn.Linear(256, 128),
         )
-        self.lstm = nn.LSTM(128, 1)
+        self.lstm = nn.LSTM(128, 1, batch_first=True, num_layers=5)
 
     def forward(self, x):
         seq_len = x.shape[1]
@@ -122,6 +122,6 @@ class TDCNN_LSTM(nn.Module):
 
 if __name__ == '__main__':
     X = torch.rand(size=(2, 12, 3, 180, 320))
-    net = TDCNN_LSTM()
+    net = CNN_LSTM()
     X = net(X)
     print(X.shape)

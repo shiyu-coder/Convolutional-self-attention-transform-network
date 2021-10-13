@@ -4,7 +4,7 @@ import numpy as np
 import torch.nn as nn
 from models.encoder import PCNNEncoder, SACNNEncoder, CNNEncoder, SingleEncoder, SALayer
 from models.decoder import Decoder
-from models.cnn import PCNN, SelfAttentionConv, CNNLayer, ChannelParallelismCNN, FastCNNLayer, BlurCNNLayer
+from models.cnn import PCNN, SelfAttentionConv, CNNLayer, ChannelParallelismCNN, FastCNNLayer, BlurCNNLayer, FCNNLayer
 from utils.positionalEncoding import PositionalEncoding
 
 
@@ -33,7 +33,8 @@ class CSATNet_v2(nn.Module):
         super(CSATNet_v2, self).__init__()
         self.num_hiddens = num_hiddens
         self.norm = nn.BatchNorm2d(3)
-        self.cnn = CNNLayer(num_hiddens, cnn_layer1_num, cnn_layer2_num, channel_expansion)
+        # self.cnn = CNNLayer(num_hiddens, cnn_layer1_num, cnn_layer2_num, channel_expansion)
+        self.cnn = FCNNLayer(num_hiddens, cnn_layer1_num, cnn_layer2_num, channel_expansion)
         # self.cnn = BlurCNNLayer(num_hiddens, cnn_layer1_num, cnn_layer2_num, laplace)
         # self.cnn = FastCNNLayer(num_hiddens, cnn_layer1_num, cnn_layer2_num, laplace)
         # self.cnn = ChannelParallelismCNN(num_hiddens, cnn_layer1_num, cnn_layer2_num)
@@ -42,8 +43,10 @@ class CSATNet_v2(nn.Module):
 
         self.li = nn.Sequential(
             nn.ELU(),
+            nn.Dropout(drop_out),
             nn.Linear(num_hiddens, (num_hiddens + vector_num)//2),
             nn.ELU(),
+            nn.Dropout(drop_out),
             nn.Linear((num_hiddens + vector_num)//2, vector_num)
         )
 
@@ -57,8 +60,10 @@ class CSATNet_v2(nn.Module):
         else:
             self.output_li = nn.Sequential(
                 nn.ELU(),
+                nn.Dropout(drop_out),
                 nn.Linear(vector_num * 2, 64),
                 nn.ELU(),
+                nn.Dropout(drop_out),
                 nn.Linear(64, label_size)
             )
 

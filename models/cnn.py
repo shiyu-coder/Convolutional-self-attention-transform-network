@@ -210,6 +210,45 @@ class CNNLayer(nn.Module):
         return x
 
 
+class FCNNLayer(nn.Module):
+    def __init__(self, num_hiddens=128, cnn_layer1_num=3, cnn_layer2_num=2, channel_expansion=False):
+        super(FCNNLayer, self).__init__()
+        self.cnn = nn.Sequential()
+        self.channel_expansion = channel_expansion
+        self.actFun = nn.ELU()
+        if channel_expansion:
+            self.ce1 = ChannelExpansionConv(3, 3)
+            self.ce2 = ChannelExpansionConv(3, 3)
+            self.ce3 = ChannelExpansionConv(3, 3)
+            in_channels = [9, 24, 36, 48, 64, 80, 128, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256]
+        else:
+            in_channels = [3, 24, 36, 48, 64, 80, 128, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256]
+        for i in range(0, cnn_layer1_num):
+            self.cnn.add_module("layer1-"+str(i), nn.Conv2d(in_channels[i], in_channels[i+1], kernel_size=5, stride=2))
+            self.cnn.add_module("actFun-" + str(i), nn.ELU())
+        self.cnn.add_module("pool1", nn.MaxPool2d(kernel_size=3, stride=1, padding=1))
+        for i in range(cnn_layer1_num, cnn_layer1_num + cnn_layer2_num):
+            self.cnn.add_module("layer2-" + str(i), nn.Conv2d(in_channels[i], in_channels[i+1], kernel_size=3))
+            self.cnn.add_module("actFun-" + str(i), nn.ELU())
+        self.cnn.add_module("pool2", nn.MaxPool2d(kernel_size=3, stride=2, padding=1))
+        in_channel = in_channels[cnn_layer1_num + cnn_layer2_num]
+        self.dense = nn.Sequential(
+            nn.Flatten(),
+            nn.Linear(in_channel * 136, 256),
+            nn.ELU(),
+            nn.Linear(256, num_hiddens),
+        )
+
+    def forward(self, x):
+        if self.channel_expansion:
+            f1 = self.actFun(self.ce2(self.actFun(self.ce1(x))))
+            f2 = self.actFun(self.ce3(x))
+            x = torch.cat((x, f1, f2), dim=1)
+        x = self.cnn(x)
+        x = self.dense(x)
+        return x
+
+
 class FastCNNLayer(nn.Module):
     def __init__(self, num_hiddens=128, cnn_layer1_num=3, cnn_layer2_num=2, channel_expansion=False):
         super(FastCNNLayer, self).__init__()

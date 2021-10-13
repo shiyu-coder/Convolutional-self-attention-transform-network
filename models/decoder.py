@@ -16,12 +16,13 @@ class DecoderLayer(nn.Module):
         self.norm2 = AddNorm((seq_len, num_hiddens), drop_out)
         self.norm3 = AddNorm((seq_len, num_hiddens), drop_out)
         self.actFun = nn.ELU()
+        self.drop = nn.Dropout(drop_out)
 
     def forward(self, x, cross):
         x = self.norm1(x, self.at1(x, x, x))
         x = self.norm2(x, self.at2(x, cross, cross))
 
-        x = self.norm3(x, self.actFun(self.dense2(self.actFun(self.dense1(x)))))
+        x = self.norm3(x, self.actFun(self.dense2(self.drop(self.actFun(self.dense1(x))))))
 
         return x
 
