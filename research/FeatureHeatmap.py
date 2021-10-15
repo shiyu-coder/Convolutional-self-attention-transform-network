@@ -17,7 +17,7 @@ transform = transforms.Compose([
         ])
 
 seq_len = 5
-data_set = ADHDataset('../../test_dataset', seq_len, transform=transform, mode='valid')
+data_set = ADHDataset('../../test_dataset', seq_len, transform=transform, mode='train')
 data_loader = DataLoader(data_set, batch_size=1, shuffle=False)
 
 
@@ -27,7 +27,7 @@ model.load_state_dict(torch.load('../checkpoints/CSATNet_v2-ADHDataset-mse_0.8_0
 model.eval()
 feature_maps = []
 for i, (batch_x, batch_y) in enumerate(data_loader):
-    if i < 500: # 150, 300, 500, 520, 580, 600
+    if i < 102: # 102, 150, 300, 500, 520, 580, 600
         continue
     if torch.cuda.is_available():
         batch_x, batch_y = batch_x.cuda(), batch_y.cuda()
